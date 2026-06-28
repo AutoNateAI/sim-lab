@@ -1,15 +1,18 @@
-import React, {useMemo, useState} from 'react';
-import {defaultConfig, runSimulation, type SimulationConfig, type WeekResult} from './simulation';
+import React, {useState} from 'react';
+import mesaOutput from './mesa-results.json';
 import styles from './simulator.module.css';
 
-const series: Array<{key: keyof WeekResult; label: string; color: string}> = [
+type WeekResult = (typeof mesaOutput.scenarios)[number]['weeks'][number];
+type MetricKey = keyof WeekResult;
+
+const series: Array<{key: MetricKey; label: string; color: string}> = [
   {key: 'aware', label: 'Aware', color: '#42a5f5'},
   {key: 'training', label: 'In training', color: '#ffb74d'},
   {key: 'trained', label: 'Trained', color: '#ab7df6'},
   {key: 'employed', label: 'Employed', color: '#5ee6b8'},
 ];
 
-function pathFor(results: WeekResult[], key: keyof WeekResult, population: number): string {
+function pathFor(results: WeekResult[], key: MetricKey, population: number): string {
   return results.map((row, index) => {
     const x = (index / (results.length - 1)) * 100;
     const y = 100 - (Number(row[key]) / population) * 100;
@@ -17,38 +20,33 @@ function pathFor(results: WeekResult[], key: keyof WeekResult, population: numbe
   }).join(' ');
 }
 
-function Control({label, value, min, max, step, display, onChange}: {label: string; value: number; min: number; max: number; step: number; display: string; onChange: (value: number) => void}) {
-  return <label className={styles.control}><span>{label}<strong>{display}</strong></span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))}/></label>;
-}
-
 export default function CityOpportunitySimulator(): React.JSX.Element {
-  const [config, setConfig] = useState<SimulationConfig>(defaultConfig);
-  const results = useMemo(() => runSimulation(config), [config]);
-  const final = results.at(-1)!;
-  const update = (key: keyof SimulationConfig, value: number) => setConfig((current) => ({...current, [key]: value}));
+  const [scenarioId, setScenarioId] = useState('baseline');
+  const scenario = mesaOutput.scenarios.find((candidate) => candidate.id === scenarioId)!;
+  const {config, metrics, weeks} = scenario;
 
   return <div className={styles.simulator} data-testid="city-opportunity-simulator">
-    <div className={styles.header}><div><span>SEEDED AGENT MODEL</span><h2>Budget → awareness → skills → work</h2></div><button type="button" onClick={() => setConfig(defaultConfig)}>Reset model</button></div>
-    <div className={styles.controls} data-testid="simulation-controls">
-      <Control label="Program budget" value={config.budget} min={250000} max={1500000} step={50000} display={`$${(config.budget / 1000).toFixed(0)}k`} onChange={(value) => update('budget', value)}/>
-      <Control label="Weekly outreach" value={config.outreachRate} min={0.02} max={0.2} step={0.01} display={`${Math.round(config.outreachRate * 100)}%`} onChange={(value) => update('outreachRate', value)}/>
-      <Control label="Training seats" value={config.trainingSeats} min={12} max={80} step={4} display={`${config.trainingSeats}`} onChange={(value) => update('trainingSeats', value)}/>
-      <Control label="Employer openings" value={config.jobOpenings} min={20} max={180} step={10} display={`${config.jobOpenings}`} onChange={(value) => update('jobOpenings', value)}/>
+    <div className={styles.header}><div><span>MESA {mesaOutput.engine.version} OUTPUT · SEED {config.seed}</span><h2>Budget → awareness → skills → work</h2></div><button type="button" onClick={() => setScenarioId('baseline')}>Reset model</button></div>
+    <div className={styles.scenarios} data-testid="simulation-controls">
+      {mesaOutput.scenarios.map((candidate) => <button key={candidate.id} type="button" aria-pressed={candidate.id === scenarioId} onClick={() => setScenarioId(candidate.id)}>{candidate.label}</button>)}
+    </div>
+    <div className={styles.configuration}>
+      <span>Budget <strong>${config.budget / 1000}k</strong></span><span>Outreach <strong>{Math.round(config.outreach_rate * 100)}%</strong></span><span>Training seats <strong>{config.training_seats}</strong></span><span>Openings <strong>{config.job_openings}</strong></span>
     </div>
     <div className={styles.metrics} data-testid="simulation-results">
-      <div><span>Residents reached</span><strong>{config.population - final.unaware}</strong><small>{Math.round(((config.population - final.unaware) / config.population) * 100)}% of population</small></div>
-      <div><span>Completed training</span><strong>{final.trained + final.employed}</strong><small>{final.training} still enrolled</small></div>
-      <div><span>Employed</span><strong>{final.employed}</strong><small>{Math.round((final.employed / config.population) * 100)}% of population</small></div>
-      <div><span>Budget remaining</span><strong>${Math.round(final.budgetRemaining / 1000)}k</strong><small>after {config.weeks} weeks</small></div>
+      <div><span>Residents reached</span><strong>{metrics.residentsReached}</strong><small>{Math.round((metrics.residentsReached / config.population) * 100)}% of population</small></div>
+      <div><span>Completed training</span><strong>{metrics.completedTraining}</strong><small>{weeks.at(-1)!.training} still enrolled</small></div>
+      <div><span>Employed</span><strong>{metrics.employed}</strong><small>{Math.round((metrics.employed / config.population) * 100)}% of population</small></div>
+      <div><span>Budget remaining</span><strong>${Math.round(metrics.budgetRemaining / 1000)}k</strong><small>after {config.weeks} weeks</small></div>
     </div>
     <div className={styles.chartWrap}>
       <div className={styles.legend}>{series.map((item) => <span key={item.label}><i style={{background: item.color}}/>{item.label}</span>)}</div>
-      <svg className={styles.chart} viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Resident outcomes over sixteen weeks">
+      <svg className={styles.chart} viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`Mesa resident outcomes for ${scenario.label}`}>
         {[0, 25, 50, 75, 100].map((y) => <line key={y} x1="0" x2="100" y1={y} y2={y} className={styles.gridline}/>) }
-        {series.map((item) => <path key={item.label} d={pathFor(results, item.key, config.population)} fill="none" stroke={item.color} strokeWidth="1.8" vectorEffect="non-scaling-stroke"/>) }
+        {series.map((item) => <path key={item.label} d={pathFor(weeks, item.key, config.population)} fill="none" stroke={item.color} strokeWidth="1.8" vectorEffect="non-scaling-stroke"/>) }
       </svg>
       <div className={styles.axis}><span>Week 0</span><span>Week {config.weeks}</span></div>
     </div>
-    <p className={styles.note}>Same settings + seed 42 = same outcome. This makes comparisons inspectable and repeatable.</p>
+    <p className={styles.note}>Generated by the Python/Mesa source model. Rebuild with <code>generate_mesa_results.py</code>.</p>
   </div>;
 }

@@ -1,6 +1,9 @@
 # Dependencies
 /node_modules
 /.npm-cache
+/.venv
+__pycache__/
+*.pyc
 
 # Production
 /build

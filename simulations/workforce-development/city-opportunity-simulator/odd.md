@@ -58,7 +58,7 @@ Awareness creates a modest network effect: the more residents who already know a
 
 ### Stochasticity
 
-Awareness, enrollment, completion, and job matching use a seeded pseudorandom generator. Seed 42 is fixed in the interface, so identical inputs reproduce identical results.
+Awareness, enrollment, completion, job matching, and initialization use independent seeded pseudorandom streams. Seed 42 is fixed in the interface, so identical inputs reproduce identical results. The separate streams also prevent a downstream change, such as employer openings, from altering upstream completion through random-number consumption.
 
 ### Observation
 
@@ -72,7 +72,7 @@ Five percent of residents begin aware of the program. All others begin unaware. 
 
 ### Input data
 
-Version 1 uses synthetic inputs. No claim is made that the defaults describe a specific city. A calibrated version should source program cost, funnel conversion, completion, placement, and retention data.
+Version 1 uses synthetic inputs and is executed with Mesa 3.5.1. No claim is made that the defaults describe a specific city. A calibrated version should source program cost, funnel conversion, completion, placement, and retention data.
 
 ### Submodels
 

@@ -9,6 +9,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 
 def run(*args: str, cwd: Path | None = None) -> None:
     subprocess.run(args, cwd=cwd, check=True)
@@ -38,6 +43,8 @@ def main() -> None:
     build = output.parent / "build"
     assets = output.parent / "assets"
     build.mkdir(exist_ok=True)
+    if assets.exists():
+        shutil.rmtree(assets)
     assets.mkdir(exist_ok=True)
     theme = output.parent / "theme.typ"
     bundled_theme = Path(__file__).resolve().parents[1] / "assets" / "theme.typ"
@@ -57,7 +64,14 @@ def main() -> None:
         if not image.exists():
             raise SystemExit(f"Missing article image: {image}")
         target = assets / image.name
-        shutil.copy2(image, target)
+        if image.suffix.lower() == ".png":
+            if Image is None:
+                raise SystemExit("Pillow is required to normalize PNG screenshots for Typst: pip install Pillow")
+            target = assets / f"{image.stem}.jpg"
+            with Image.open(image) as raster:
+                raster.convert("RGB").save(target, format="JPEG", quality=94, optimize=True)
+        else:
+            shutil.copy2(image, target)
         return f"![{alt}](assets/{target.name})"
 
     prepared = re.sub(r"!\[([^]]*)\]\(([^)]+)\)", copy_image, text)

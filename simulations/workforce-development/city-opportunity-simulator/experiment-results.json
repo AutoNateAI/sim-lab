@@ -1,0 +1,51 @@
+{
+  "captured_at": "2026-06-28T04:43:03.137Z",
+  "app_url": "http://127.0.0.1:3000/simulations/workforce-development/city-opportunity-simulator",
+  "headed": true,
+  "experiments": [
+    {
+      "id": "baseline",
+      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "metrics": {
+        "Residents reached": "212",
+        "Completed training": "148",
+        "Employed": "90",
+        "Budget remaining": "$0k"
+      },
+      "screenshot": "assets/01-baseline-simulation.png"
+    },
+    {
+      "id": "expanded-outreach",
+      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "metrics": {
+        "Residents reached": "236",
+        "Completed training": "149",
+        "Employed": "90",
+        "Budget remaining": "$0k"
+      },
+      "screenshot": "assets/02-expanded-outreach.png"
+    },
+    {
+      "id": "expanded-training",
+      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "metrics": {
+        "Residents reached": "204",
+        "Completed training": "152",
+        "Employed": "90",
+        "Budget remaining": "$0k"
+      },
+      "screenshot": "assets/03-expanded-training.png"
+    },
+    {
+      "id": "expanded-employer-demand",
+      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "metrics": {
+        "Residents reached": "204",
+        "Completed training": "152",
+        "Employed": "120",
+        "Budget remaining": "$0k"
+      },
+      "screenshot": "assets/04-expanded-employer-demand.png"
+    }
+  ]
+}

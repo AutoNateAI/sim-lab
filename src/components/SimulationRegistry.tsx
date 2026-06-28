@@ -31,7 +31,7 @@ export default function SimulationRegistry(): React.JSX.Element {
         <h2><Link to={simulation.route}>{simulation.title}</Link></h2>
         <p>{simulation.summary}</p>
         <div className={styles.tags}>{simulation.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-        <div className={styles.artifacts}><span>ODD {simulation.odd_version}</span><span>Model {simulation.model_version}</span><span>Browser model</span><span>PDF</span></div>
+        <div className={styles.artifacts}><span>{simulation.engine}</span><span>ODD {simulation.odd_version}</span><span>Model {simulation.model_version}</span><span>Browser output</span><span>PDF</span></div>
       </article>)}
       {matches.length === 0 && <p className={styles.empty}>No simulations match those terms.</p>}
     </div>

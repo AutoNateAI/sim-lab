@@ -3,6 +3,13 @@
 .header span {font: 500 .72rem var(--ifm-font-family-monospace); color: var(--ifm-color-primary); letter-spacing: .12em;}
 .header h2 {font-size: 1.35rem; margin: .35rem 0 0;}
 .header button {background: transparent; color: var(--ifm-font-color-base); border: 1px solid var(--sim-border); padding: .55rem .8rem; cursor: pointer;}
+.scenarios {display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--sim-border);}
+.scenarios button {padding:1rem .7rem; border:0; border-right:1px solid var(--sim-border); background:transparent; color:var(--sim-muted); cursor:pointer; font:500 .76rem var(--ifm-font-family-monospace);}
+.scenarios button:last-child {border-right:0;}
+.scenarios button[aria-pressed='true'] {background:var(--ifm-color-primary); color:#07110e;}
+.configuration {display:grid; grid-template-columns:repeat(4,1fr); padding:.75rem 1.25rem; gap:1rem; border-bottom:1px solid var(--sim-border); color:var(--sim-muted); font-size:.76rem;}
+.configuration span {display:flex; justify-content:space-between;}
+.configuration strong {color:var(--ifm-font-color-base); font-family:var(--ifm-font-family-monospace);}
 .controls {display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 2rem; padding: 1.5rem; border-bottom: 1px solid var(--sim-border);}
 .control span {display: flex; justify-content: space-between; font-size: .84rem; color: var(--sim-muted);}
 .control strong {color: var(--ifm-font-color-base); font-family: var(--ifm-font-family-monospace);}
@@ -19,4 +26,4 @@
 .gridline {stroke:var(--sim-border); stroke-width:.5; vector-effect:non-scaling-stroke;}
 .axis {display:flex; justify-content:space-between; color:var(--sim-muted); font:400 .7rem var(--ifm-font-family-monospace); margin-top:.5rem;}
 .note {margin:0; padding:1rem 1.5rem; border-top:1px solid var(--sim-border); color:var(--sim-muted); font-size:.8rem;}
-@media (max-width: 760px) {.controls,.metrics {grid-template-columns:1fr 1fr}.metrics div:nth-child(2){border-right:0}.metrics div{border-bottom:1px solid var(--sim-border)}.chart{height:210px}}
+@media (max-width: 760px) {.controls,.metrics,.scenarios,.configuration {grid-template-columns:1fr 1fr}.metrics div:nth-child(2){border-right:0}.metrics div{border-bottom:1px solid var(--sim-border)}.chart{height:210px}}

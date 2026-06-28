@@ -16,7 +16,7 @@ function walk(directory) {
 }
 walk(root);
 
-const required = ['id', 'title', 'summary', 'industry', 'status', 'odd_version', 'model_version', 'created_at', 'route', 'agents', 'metrics', 'tags', 'artifacts'];
+const required = ['id', 'title', 'summary', 'industry', 'status', 'odd_version', 'model_version', 'engine', 'created_at', 'route', 'agents', 'metrics', 'tags', 'artifacts'];
 const ids = new Set();
 const simulations = manifests.map((path) => {
   const manifest = parse(readFileSync(path, 'utf8'));
@@ -31,6 +31,9 @@ const simulations = manifests.map((path) => {
   }
   if (manifest.artifacts.pdf && (!existsSync(join(folder, 'pdf')) || !readdirSync(join(folder, 'pdf')).some((name) => name.endsWith('.pdf')))) throw new Error(`${manifest.id} claims pdf but no PDF exists`);
   if (manifest.artifacts.browser_visualization && !readdirSync(folder).some((name) => name.endsWith('.tsx'))) throw new Error(`${manifest.id} claims browser_visualization but no TSX component exists`);
+  for (const field of ['experiment_results', 'model_output']) {
+    if (manifest[field] && !existsSync(join(folder, manifest[field]))) throw new Error(`${manifest.id} declares ${field} but ${manifest[field]} is missing`);
+  }
   manifest.created_at = String(manifest.created_at);
   return manifest;
 }).sort((a, b) => a.id.localeCompare(b.id));

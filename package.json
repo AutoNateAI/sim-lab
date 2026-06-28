@@ -15,11 +15,14 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
     "capture:first": "node simulations/workforce-development/city-opportunity-simulator/capture-actual-app.mjs",
+    "pdf:first": ".venv/bin/python .codex/skills/export-simulation-article/scripts/export_article_pdf.py simulations/workforce-development/city-opportunity-simulator/tutorial.md --title 'Find the Workforce Pipeline Bottleneck' --output simulations/workforce-development/city-opportunity-simulator/pdf/workforce_001-tutorial.pdf",
     "registry:build": "node scripts/build-registry.mjs",
     "registry:check": "node scripts/build-registry.mjs --check",
-    "test:simulation": "tsx scripts/test-simulation.ts",
+    "mesa:generate": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py",
+    "mesa:check": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py --check",
+    "test:simulation": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/test_mesa_model.py",
     "validate:simulations": "node scripts/validate-simulations.mjs",
-    "check": "npm run typecheck && npm run test:simulation && npm run registry:check && npm run validate:simulations && npm run build"
+    "check": "npm run typecheck && npm run test:simulation && npm run mesa:check && npm run registry:check && npm run validate:simulations && npm run build"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.1",
@@ -39,7 +42,6 @@
     "@docusaurus/types": "3.10.1",
     "@playwright/test": "^1.53.0",
     "@types/react": "^19.0.0",
-    "tsx": "^4.22.4",
     "typescript": "~6.0.2"
   },
   "browserslist": {

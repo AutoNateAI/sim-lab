@@ -1,0 +1,705 @@
+{
+  "simulation_id": "workforce_001",
+  "engine": {
+    "name": "Mesa",
+    "version": "3.5.1"
+  },
+  "scenarios": [
+    {
+      "id": "baseline",
+      "label": "Baseline",
+      "config": {
+        "seed": 42,
+        "weeks": 16,
+        "population": 240,
+        "budget": 600000,
+        "outreach_rate": 0.08,
+        "training_seats": 36,
+        "job_openings": 90
+      },
+      "metrics": {
+        "residentsReached": 212,
+        "completedTraining": 148,
+        "employed": 90,
+        "budgetRemaining": 0
+      },
+      "weeks": [
+        {
+          "week": 0,
+          "unaware": 228,
+          "aware": 12,
+          "training": 0,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 600000
+        },
+        {
+          "week": 1,
+          "unaware": 202,
+          "aware": 26,
+          "training": 12,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 554924
+        },
+        {
+          "week": 2,
+          "unaware": 173,
+          "aware": 37,
+          "training": 30,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 488848
+        },
+        {
+          "week": 3,
+          "unaware": 155,
+          "aware": 49,
+          "training": 36,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 464772
+        },
+        {
+          "week": 4,
+          "unaware": 131,
+          "aware": 61,
+          "training": 36,
+          "trained": 9,
+          "employed": 3,
+          "budgetRemaining": 419696
+        },
+        {
+          "week": 5,
+          "unaware": 114,
+          "aware": 62,
+          "training": 36,
+          "trained": 22,
+          "employed": 6,
+          "budgetRemaining": 353620
+        },
+        {
+          "week": 6,
+          "unaware": 101,
+          "aware": 69,
+          "training": 36,
+          "trained": 24,
+          "employed": 10,
+          "budgetRemaining": 329544
+        },
+        {
+          "week": 7,
+          "unaware": 97,
+          "aware": 61,
+          "training": 36,
+          "trained": 27,
+          "employed": 19,
+          "budgetRemaining": 284468
+        },
+        {
+          "week": 8,
+          "unaware": 86,
+          "aware": 56,
+          "training": 35,
+          "trained": 32,
+          "employed": 31,
+          "budgetRemaining": 221892
+        },
+        {
+          "week": 9,
+          "unaware": 73,
+          "aware": 62,
+          "training": 36,
+          "trained": 29,
+          "employed": 40,
+          "budgetRemaining": 194316
+        },
+        {
+          "week": 10,
+          "unaware": 62,
+          "aware": 63,
+          "training": 36,
+          "trained": 34,
+          "employed": 45,
+          "budgetRemaining": 149240
+        },
+        {
+          "week": 11,
+          "unaware": 55,
+          "aware": 53,
+          "training": 36,
+          "trained": 40,
+          "employed": 56,
+          "budgetRemaining": 86664
+        },
+        {
+          "week": 12,
+          "unaware": 48,
+          "aware": 53,
+          "training": 36,
+          "trained": 34,
+          "employed": 69,
+          "budgetRemaining": 59088
+        },
+        {
+          "week": 13,
+          "unaware": 44,
+          "aware": 46,
+          "training": 36,
+          "trained": 36,
+          "employed": 78,
+          "budgetRemaining": 14012
+        },
+        {
+          "week": 14,
+          "unaware": 36,
+          "aware": 53,
+          "training": 22,
+          "trained": 39,
+          "employed": 90,
+          "budgetRemaining": 436
+        },
+        {
+          "week": 15,
+          "unaware": 28,
+          "aware": 61,
+          "training": 15,
+          "trained": 46,
+          "employed": 90,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 16,
+          "unaware": 28,
+          "aware": 61,
+          "training": 3,
+          "trained": 58,
+          "employed": 90,
+          "budgetRemaining": 0
+        }
+      ]
+    },
+    {
+      "id": "expanded-outreach",
+      "label": "Outreach 16%",
+      "config": {
+        "seed": 42,
+        "weeks": 16,
+        "population": 240,
+        "budget": 600000,
+        "outreach_rate": 0.16,
+        "training_seats": 36,
+        "job_openings": 90
+      },
+      "metrics": {
+        "residentsReached": 236,
+        "completedTraining": 149,
+        "employed": 90,
+        "budgetRemaining": 0
+      },
+      "weeks": [
+        {
+          "week": 0,
+          "unaware": 228,
+          "aware": 12,
+          "training": 0,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 600000
+        },
+        {
+          "week": 1,
+          "unaware": 186,
+          "aware": 37,
+          "training": 17,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 536848
+        },
+        {
+          "week": 2,
+          "unaware": 145,
+          "aware": 59,
+          "training": 36,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 466696
+        },
+        {
+          "week": 3,
+          "unaware": 111,
+          "aware": 93,
+          "training": 36,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 463044
+        },
+        {
+          "week": 4,
+          "unaware": 87,
+          "aware": 100,
+          "training": 36,
+          "trained": 14,
+          "employed": 3,
+          "budgetRemaining": 399892
+        },
+        {
+          "week": 5,
+          "unaware": 68,
+          "aware": 102,
+          "training": 36,
+          "trained": 25,
+          "employed": 9,
+          "budgetRemaining": 329740
+        },
+        {
+          "week": 6,
+          "unaware": 52,
+          "aware": 118,
+          "training": 36,
+          "trained": 22,
+          "employed": 12,
+          "budgetRemaining": 326088
+        },
+        {
+          "week": 7,
+          "unaware": 35,
+          "aware": 118,
+          "training": 36,
+          "trained": 26,
+          "employed": 25,
+          "budgetRemaining": 262936
+        },
+        {
+          "week": 8,
+          "unaware": 25,
+          "aware": 110,
+          "training": 36,
+          "trained": 33,
+          "employed": 36,
+          "budgetRemaining": 192784
+        },
+        {
+          "week": 9,
+          "unaware": 17,
+          "aware": 118,
+          "training": 36,
+          "trained": 27,
+          "employed": 42,
+          "budgetRemaining": 189132
+        },
+        {
+          "week": 10,
+          "unaware": 12,
+          "aware": 108,
+          "training": 36,
+          "trained": 37,
+          "employed": 47,
+          "budgetRemaining": 125980
+        },
+        {
+          "week": 11,
+          "unaware": 7,
+          "aware": 94,
+          "training": 36,
+          "trained": 42,
+          "employed": 61,
+          "budgetRemaining": 55828
+        },
+        {
+          "week": 12,
+          "unaware": 7,
+          "aware": 94,
+          "training": 36,
+          "trained": 32,
+          "employed": 71,
+          "budgetRemaining": 52176
+        },
+        {
+          "week": 13,
+          "unaware": 5,
+          "aware": 84,
+          "training": 32,
+          "trained": 37,
+          "employed": 82,
+          "budgetRemaining": 3024
+        },
+        {
+          "week": 14,
+          "unaware": 4,
+          "aware": 87,
+          "training": 13,
+          "trained": 46,
+          "employed": 90,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 15,
+          "unaware": 4,
+          "aware": 87,
+          "training": 13,
+          "trained": 46,
+          "employed": 90,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 16,
+          "unaware": 4,
+          "aware": 87,
+          "training": 0,
+          "trained": 59,
+          "employed": 90,
+          "budgetRemaining": 0
+        }
+      ]
+    },
+    {
+      "id": "expanded-training",
+      "label": "Training seats 72",
+      "config": {
+        "seed": 42,
+        "weeks": 16,
+        "population": 240,
+        "budget": 600000,
+        "outreach_rate": 0.08,
+        "training_seats": 72,
+        "job_openings": 90
+      },
+      "metrics": {
+        "residentsReached": 204,
+        "completedTraining": 152,
+        "employed": 90,
+        "budgetRemaining": 0
+      },
+      "weeks": [
+        {
+          "week": 0,
+          "unaware": 228,
+          "aware": 12,
+          "training": 0,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 600000
+        },
+        {
+          "week": 1,
+          "unaware": 202,
+          "aware": 26,
+          "training": 12,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 554924
+        },
+        {
+          "week": 2,
+          "unaware": 173,
+          "aware": 37,
+          "training": 30,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 488848
+        },
+        {
+          "week": 3,
+          "unaware": 155,
+          "aware": 42,
+          "training": 43,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 440272
+        },
+        {
+          "week": 4,
+          "unaware": 131,
+          "aware": 49,
+          "training": 48,
+          "trained": 9,
+          "employed": 3,
+          "budgetRemaining": 377696
+        },
+        {
+          "week": 5,
+          "unaware": 114,
+          "aware": 51,
+          "training": 47,
+          "trained": 22,
+          "employed": 6,
+          "budgetRemaining": 315120
+        },
+        {
+          "week": 6,
+          "unaware": 101,
+          "aware": 53,
+          "training": 45,
+          "trained": 30,
+          "employed": 11,
+          "budgetRemaining": 273544
+        },
+        {
+          "week": 7,
+          "unaware": 97,
+          "aware": 42,
+          "training": 43,
+          "trained": 33,
+          "employed": 25,
+          "budgetRemaining": 217968
+        },
+        {
+          "week": 8,
+          "unaware": 86,
+          "aware": 41,
+          "training": 40,
+          "trained": 36,
+          "employed": 37,
+          "budgetRemaining": 165892
+        },
+        {
+          "week": 9,
+          "unaware": 73,
+          "aware": 43,
+          "training": 41,
+          "trained": 40,
+          "employed": 43,
+          "budgetRemaining": 120816
+        },
+        {
+          "week": 10,
+          "unaware": 62,
+          "aware": 40,
+          "training": 40,
+          "trained": 46,
+          "employed": 52,
+          "budgetRemaining": 68740
+        },
+        {
+          "week": 11,
+          "unaware": 55,
+          "aware": 33,
+          "training": 41,
+          "trained": 45,
+          "employed": 66,
+          "budgetRemaining": 13164
+        },
+        {
+          "week": 12,
+          "unaware": 48,
+          "aware": 38,
+          "training": 31,
+          "trained": 47,
+          "employed": 76,
+          "budgetRemaining": 3088
+        },
+        {
+          "week": 13,
+          "unaware": 44,
+          "aware": 44,
+          "training": 17,
+          "trained": 45,
+          "employed": 90,
+          "budgetRemaining": 12
+        },
+        {
+          "week": 14,
+          "unaware": 36,
+          "aware": 52,
+          "training": 2,
+          "trained": 60,
+          "employed": 90,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 15,
+          "unaware": 36,
+          "aware": 52,
+          "training": 0,
+          "trained": 62,
+          "employed": 90,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 16,
+          "unaware": 36,
+          "aware": 52,
+          "training": 0,
+          "trained": 62,
+          "employed": 90,
+          "budgetRemaining": 0
+        }
+      ]
+    },
+    {
+      "id": "expanded-employer-demand",
+      "label": "Openings 160",
+      "config": {
+        "seed": 42,
+        "weeks": 16,
+        "population": 240,
+        "budget": 600000,
+        "outreach_rate": 0.08,
+        "training_seats": 72,
+        "job_openings": 160
+      },
+      "metrics": {
+        "residentsReached": 204,
+        "completedTraining": 152,
+        "employed": 120,
+        "budgetRemaining": 0
+      },
+      "weeks": [
+        {
+          "week": 0,
+          "unaware": 228,
+          "aware": 12,
+          "training": 0,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 600000
+        },
+        {
+          "week": 1,
+          "unaware": 202,
+          "aware": 26,
+          "training": 12,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 554924
+        },
+        {
+          "week": 2,
+          "unaware": 173,
+          "aware": 37,
+          "training": 30,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 488848
+        },
+        {
+          "week": 3,
+          "unaware": 155,
+          "aware": 42,
+          "training": 43,
+          "trained": 0,
+          "employed": 0,
+          "budgetRemaining": 440272
+        },
+        {
+          "week": 4,
+          "unaware": 131,
+          "aware": 49,
+          "training": 48,
+          "trained": 9,
+          "employed": 3,
+          "budgetRemaining": 377696
+        },
+        {
+          "week": 5,
+          "unaware": 114,
+          "aware": 51,
+          "training": 47,
+          "trained": 22,
+          "employed": 6,
+          "budgetRemaining": 315120
+        },
+        {
+          "week": 6,
+          "unaware": 101,
+          "aware": 53,
+          "training": 45,
+          "trained": 30,
+          "employed": 11,
+          "budgetRemaining": 273544
+        },
+        {
+          "week": 7,
+          "unaware": 97,
+          "aware": 42,
+          "training": 43,
+          "trained": 33,
+          "employed": 25,
+          "budgetRemaining": 217968
+        },
+        {
+          "week": 8,
+          "unaware": 86,
+          "aware": 41,
+          "training": 40,
+          "trained": 36,
+          "employed": 37,
+          "budgetRemaining": 165892
+        },
+        {
+          "week": 9,
+          "unaware": 73,
+          "aware": 43,
+          "training": 41,
+          "trained": 40,
+          "employed": 43,
+          "budgetRemaining": 120816
+        },
+        {
+          "week": 10,
+          "unaware": 62,
+          "aware": 40,
+          "training": 40,
+          "trained": 46,
+          "employed": 52,
+          "budgetRemaining": 68740
+        },
+        {
+          "week": 11,
+          "unaware": 55,
+          "aware": 33,
+          "training": 41,
+          "trained": 45,
+          "employed": 66,
+          "budgetRemaining": 13164
+        },
+        {
+          "week": 12,
+          "unaware": 48,
+          "aware": 38,
+          "training": 31,
+          "trained": 47,
+          "employed": 76,
+          "budgetRemaining": 3088
+        },
+        {
+          "week": 13,
+          "unaware": 44,
+          "aware": 44,
+          "training": 17,
+          "trained": 45,
+          "employed": 90,
+          "budgetRemaining": 12
+        },
+        {
+          "week": 14,
+          "unaware": 36,
+          "aware": 52,
+          "training": 2,
+          "trained": 45,
+          "employed": 105,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 15,
+          "unaware": 36,
+          "aware": 52,
+          "training": 0,
+          "trained": 38,
+          "employed": 114,
+          "budgetRemaining": 0
+        },
+        {
+          "week": 16,
+          "unaware": 36,
+          "aware": 52,
+          "training": 0,
+          "trained": 32,
+          "employed": 120,
+          "budgetRemaining": 0
+        }
+      ]
+    }
+  ]
+}

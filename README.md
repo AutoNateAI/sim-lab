@@ -13,7 +13,10 @@ The first model is the [City Opportunity Simulator](simulations/workforce-develo
 ## Local development
 
 ```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 npm install --cache .npm-cache
+npm run mesa:generate
 npm start
 ```
 
@@ -25,6 +28,8 @@ Open `http://localhost:3000/`.
 npm run check
 npm run capture:first
 ```
+
+`npm run capture:first` launches headed Chrome by default and walks every tutorial scenario. Use `HEADLESS=true npm run capture:first` only for unattended capture.
 
 ## Publishing
 
