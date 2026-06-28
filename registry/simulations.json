@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-06-28",
+  "simulations": [
+    {
+      "id": "workforce_001",
+      "title": "City Opportunity Simulator",
+      "summary": "Explore how workforce funding moves through resident awareness, training capacity, and employer demand.",
+      "industry": "workforce",
+      "status": "active",
+      "odd_version": "1.0",
+      "model_version": "1.0.0",
+      "created_at": "2026-06-28",
+      "route": "/simulations/workforce-development/city-opportunity-simulator",
+      "agents": [
+        "resident",
+        "workforce_program",
+        "employer_market"
+      ],
+      "metrics": [
+        "residents_reached",
+        "training_completions",
+        "employment",
+        "budget_remaining"
+      ],
+      "tags": [
+        "workforce",
+        "public-funding",
+        "training",
+        "employment",
+        "agent-based-model"
+      ],
+      "artifacts": {
+        "odd": true,
+        "code": true,
+        "tutorial": true,
+        "pdf": true,
+        "browser_visualization": true,
+        "browser_capture": true
+      }
+    }
+  ]
+}

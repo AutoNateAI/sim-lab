@@ -1,0 +1,4 @@
+interface:
+  display_name: "Export Simulation Article"
+  short_description: "Export simulation tutorials as polished PDFs"
+  default_prompt: "Use $export-simulation-article to export this simulation tutorial as a polished PDF."

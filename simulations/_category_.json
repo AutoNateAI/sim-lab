@@ -1,0 +1,5 @@
+{
+  "label": "Simulation industries",
+  "position": 1,
+  "link": {"type": "generated-index", "title": "Simulation library", "description": "Choose an industry, run a model, and inspect how it works."}
+}

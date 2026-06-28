@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capture Simulation Browser"
+  short_description: "Capture simulation screenshots with Playwright"
+  default_prompt: "Use $capture-simulation-browser to capture screenshots of this simulation tutorial."

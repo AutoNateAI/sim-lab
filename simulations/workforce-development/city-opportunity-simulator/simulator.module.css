@@ -1,0 +1,22 @@
+.simulator {border: 1px solid var(--sim-border); background: var(--ifm-background-surface-color); margin: 2rem 0; box-shadow: 0 20px 80px rgba(0,0,0,.14);}
+.header {padding: 1.5rem; display: flex; align-items: start; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--sim-border);}
+.header span {font: 500 .72rem var(--ifm-font-family-monospace); color: var(--ifm-color-primary); letter-spacing: .12em;}
+.header h2 {font-size: 1.35rem; margin: .35rem 0 0;}
+.header button {background: transparent; color: var(--ifm-font-color-base); border: 1px solid var(--sim-border); padding: .55rem .8rem; cursor: pointer;}
+.controls {display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 2rem; padding: 1.5rem; border-bottom: 1px solid var(--sim-border);}
+.control span {display: flex; justify-content: space-between; font-size: .84rem; color: var(--sim-muted);}
+.control strong {color: var(--ifm-font-color-base); font-family: var(--ifm-font-family-monospace);}
+.control input {width: 100%; accent-color: var(--ifm-color-primary); margin-top: .65rem;}
+.metrics {display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--sim-border);}
+.metrics div {padding: 1.25rem; border-right: 1px solid var(--sim-border);}
+.metrics div:last-child {border-right: 0;}
+.metrics span,.metrics small {display:block; color:var(--sim-muted); font-size:.74rem;}
+.metrics strong {display:block; font:500 2rem var(--ifm-font-family-monospace); margin:.4rem 0;}
+.chartWrap {padding: 1.5rem;}
+.legend {display:flex; flex-wrap:wrap; gap:1rem; font-size:.75rem; color:var(--sim-muted); margin-bottom:1rem;}
+.legend i {display:inline-block; width:8px; height:8px; margin-right:5px;}
+.chart {display:block; width:100%; height:290px; overflow:visible;}
+.gridline {stroke:var(--sim-border); stroke-width:.5; vector-effect:non-scaling-stroke;}
+.axis {display:flex; justify-content:space-between; color:var(--sim-muted); font:400 .7rem var(--ifm-font-family-monospace); margin-top:.5rem;}
+.note {margin:0; padding:1rem 1.5rem; border-top:1px solid var(--sim-border); color:var(--sim-muted); font-size:.8rem;}
+@media (max-width: 760px) {.controls,.metrics {grid-template-columns:1fr 1fr}.metrics div:nth-child(2){border-right:0}.metrics div{border-bottom:1px solid var(--sim-border)}.chart{height:210px}}

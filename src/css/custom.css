@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap');
+
+:root {
+  --ifm-color-primary: #007a5e; --ifm-color-primary-dark: #006e55; --ifm-color-primary-darker: #006850;
+  --ifm-color-primary-darkest: #005642; --ifm-color-primary-light: #008667; --ifm-color-primary-lighter: #008c6c;
+  --ifm-color-primary-lightest: #009e7a; --ifm-font-family-base: 'Manrope', sans-serif;
+  --ifm-font-family-monospace: 'DM Mono', monospace; --ifm-heading-font-weight: 800;
+  --sim-muted: #52615d; --sim-border: #d7dfdc;
+}
+[data-theme='dark'] {--ifm-color-primary: #5ee6b8; --ifm-background-color: #0a1110; --ifm-background-surface-color: #111a18; --sim-muted: #a2b3ae; --sim-border: #273532;}
+body {background-image: radial-gradient(circle at 85% 8%, rgba(44, 207, 154, .08), transparent 32rem);}
+.navbar {border-bottom: 1px solid var(--sim-border); box-shadow: none;}
+.button {border-radius: 2px;}
+.theme-doc-markdown img {border: 1px solid var(--sim-border); border-radius: 4px;}

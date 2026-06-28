@@ -1,0 +1,15 @@
+.registry {margin:2rem 0 4rem;}
+.filters {display:grid; grid-template-columns:2fr 1fr; gap:1rem; padding:1rem; border:1px solid var(--sim-border); background:var(--ifm-background-surface-color);}
+.filters label span {display:block; font:500 .72rem var(--ifm-font-family-monospace); color:var(--sim-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.45rem;}
+.filters input,.filters select {width:100%; padding:.8rem; border:1px solid var(--sim-border); background:var(--ifm-background-color); color:var(--ifm-font-color-base); font:inherit;}
+.count {padding:1rem 0; color:var(--sim-muted); font:400 .75rem var(--ifm-font-family-monospace);}
+.results article {padding:1.5rem; border:1px solid var(--sim-border); background:var(--ifm-background-surface-color);}
+.results h2 {margin:.9rem 0 .5rem;}
+.results p {color:var(--sim-muted); max-width:720px;}
+.meta,.tags,.artifacts {display:flex; flex-wrap:wrap; gap:.5rem;}
+.meta span,.tags span,.artifacts span {font:400 .68rem var(--ifm-font-family-monospace); padding:.28rem .5rem; border:1px solid var(--sim-border);}
+.meta span {text-transform:uppercase; color:var(--ifm-color-primary);}
+.artifacts {margin-top:1.25rem;}
+.artifacts span {border:0; padding:0; margin-right:.8rem; color:var(--sim-muted);}
+.empty {padding:2rem; border:1px solid var(--sim-border);}
+@media (max-width:700px){.filters{grid-template-columns:1fr}}
