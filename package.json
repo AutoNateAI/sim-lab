@@ -22,7 +22,11 @@
     "mesa:check": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py --check",
     "test:simulation": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/test_mesa_model.py",
     "validate:simulations": "node scripts/validate-simulations.mjs",
-    "check": "npm run typecheck && npm run test:simulation && npm run mesa:check && npm run registry:check && npm run validate:simulations && npm run build"
+    "dashboard:dev": "npm --prefix apps/sim-dashboard run dev",
+    "dashboard:build": "npm --prefix apps/sim-dashboard run build",
+    "dashboard:preview": "npm --prefix apps/sim-dashboard run preview",
+    "dashboard:check": "npm --prefix apps/sim-dashboard run check",
+    "check": "npm run typecheck && npm run test:simulation && npm run mesa:check && npm run registry:check && npm run validate:simulations && npm run dashboard:check && npm run build"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.1",
@@ -31,6 +35,7 @@
     "@docusaurus/theme-mermaid": "3.10.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
+    "phaser": "^4.2.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -41,8 +46,12 @@
     "@docusaurus/tsconfig": "3.10.1",
     "@docusaurus/types": "3.10.1",
     "@playwright/test": "^1.53.0",
+    "@types/node": "^22.15.30",
     "@types/react": "^19.0.0",
-    "typescript": "~6.0.2"
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "~6.0.2",
+    "vite": "^5.4.8"
   },
   "browserslist": {
     "production": [

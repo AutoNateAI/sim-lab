@@ -1,0 +1,11 @@
+{
+  "name": "sim-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "../../node_modules/.bin/vite",
+    "build": "../../node_modules/.bin/vite build",
+    "preview": "../../node_modules/.bin/vite preview --host",
+    "check": "../../node_modules/.bin/tsc -p tsconfig.json --noEmit"
+  }
+}

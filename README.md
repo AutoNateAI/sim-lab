@@ -10,6 +10,8 @@ An open, executable library for learning how real-world systems behave. Every si
 
 The first model is the [City Opportunity Simulator](simulations/workforce-development/city-opportunity-simulator/index.mdx), a seeded workforce-development model of the path from public budget to resident awareness, training, and employment.
 
+Sim Lab is growing into a simulation research system: Codex helps define the ODD, implement the Mesa model, construct the replay world, run controlled experiments, and turn observations into public Docusaurus articles and PDFs. Read the [research cockpit and world roadmap](simulations/vision.md).
+
 ## Local development
 
 ```bash
@@ -21,6 +23,14 @@ npm start
 ```
 
 Open `http://localhost:3000/`.
+
+To start the standalone dashboard app in a second terminal:
+
+```bash
+npm run dashboard:dev
+```
+
+Open `http://127.0.0.1:5174/`. Dark mode is the default dashboard theme.
 
 ## Quality checks
 

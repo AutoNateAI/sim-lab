@@ -30,7 +30,8 @@ for (const scenario of scenarios) {
   await page.goto(appUrl, {waitUntil: 'networkidle'});
   await page.locator('html[data-has-hydrated="true"]').waitFor();
   const simulator = page.getByTestId('city-opportunity-simulator');
-  await simulator.waitFor({state: 'visible'});
+  await simulator.waitFor({state: 'attached'});
+  await simulator.scrollIntoViewIfNeeded();
   await page.getByRole('button', {name: 'Reset model'}).click();
   await page.getByRole('button', {name: scenario.label, exact: true}).click();
   await page.waitForFunction(() => document.querySelector('[data-testid="simulation-results"] strong')?.textContent?.length);

@@ -52,9 +52,9 @@ Doubling seats raised completed training from 148 to 152 while employment stayed
 
 Select **Openings 160**. This Mesa run keeps 72 training seats and changes employer openings from 90 to 160.
 
-![Mesa employer-demand experiment with 160 openings and 120 residents employed](assets/04-expanded-employer-demand.png)
+![Mesa employer-demand experiment with 160 openings and 124 residents employed](assets/04-expanded-employer-demand.png)
 
-Employment rose from 90 to 120 while completed training remained exactly 152. That isolates employer demand as the binding constraint in the 72-seat run.
+Employment rose from 90 to 124 while completed training remained exactly 152. That isolates employer demand as the binding constraint in the 72-seat run.
 
 ## 5. Make a defensible claim
 

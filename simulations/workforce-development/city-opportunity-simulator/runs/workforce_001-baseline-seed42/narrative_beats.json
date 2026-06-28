@@ -1,0 +1,17 @@
+[
+  {
+    "week": 3,
+    "title": "Training reaches capacity",
+    "explanation": "Concurrent training slots fill, so access becomes a bottleneck even though interest keeps rising."
+  },
+  {
+    "week": 4,
+    "title": "Employment starts to move",
+    "explanation": "Trained residents begin matching into openings and the pipeline becomes visible in the outcome curve."
+  },
+  {
+    "week": 16,
+    "title": "Run closes with a stable bottleneck",
+    "explanation": "The final state shows where the system stopped translating resources into employment."
+  }
+]

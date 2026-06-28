@@ -1,0 +1,12 @@
+simulation_id: workforce_001
+scenario_id: expanded-employer-demand
+label: Openings 160
+created_at: '2026-06-28'
+config:
+  seed: 42
+  weeks: 16
+  population: 240
+  budget: 600000
+  outreach_rate: 0.08
+  training_seats: 72
+  job_openings: 160

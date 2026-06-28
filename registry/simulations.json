@@ -25,6 +25,7 @@
       ],
       "experiment_results": "experiment-results.json",
       "model_output": "mesa-results.json",
+      "run_index": "runs/index.json",
       "tags": [
         "workforce",
         "public-funding",

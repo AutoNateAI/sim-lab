@@ -8,8 +8,8 @@ sidebar_position: 3
 The Mesa simulation is intentionally small enough to read in one sitting.
 
 - [`mesa_model.py`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/mesa_model.py) defines the Mesa `Model`, resident `Agent`, schedule, and `DataCollector`.
-- [`generate_mesa_results.py`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py) runs the documented scenarios into `mesa-results.json`.
-- [`CityOpportunitySimulator.tsx`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/CityOpportunitySimulator.tsx) visualizes those checked-in Mesa outputs; it does not reimplement the model in TypeScript.
+- [`generate_mesa_results.py`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py) runs the documented scenarios into per-run folders under `runs/` and writes `runs/index.json` plus the compatibility `mesa-results.json`.
+- [`CityOpportunitySimulator.tsx`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/CityOpportunitySimulator.tsx) visualizes the run index and selected run summaries; it does not reimplement the model in TypeScript.
 - [`capture-actual-app.mjs`](https://github.com/AutoNateAI/sim-lab/blob/main/simulations/workforce-development/city-opportunity-simulator/capture-actual-app.mjs) captures reproducible screenshots from the real site with Playwright.
 
 ## Determinism
@@ -22,6 +22,15 @@ expanded = WorkforceModel(WorkforceConfig(seed=42, training_seats=60))
 ```
 
 Only the changed parameter differs between those runs.
+
+Each run also writes a structured artifact bundle:
+
+- `config.yaml`
+- `summary.json`
+- `metrics_by_step.csv`
+- `agent_states.csv`
+- `events.jsonl`
+- `narrative_beats.json`
 
 ## Extending the model
 

@@ -31,8 +31,17 @@ const simulations = manifests.map((path) => {
   }
   if (manifest.artifacts.pdf && (!existsSync(join(folder, 'pdf')) || !readdirSync(join(folder, 'pdf')).some((name) => name.endsWith('.pdf')))) throw new Error(`${manifest.id} claims pdf but no PDF exists`);
   if (manifest.artifacts.browser_visualization && !readdirSync(folder).some((name) => name.endsWith('.tsx'))) throw new Error(`${manifest.id} claims browser_visualization but no TSX component exists`);
-  for (const field of ['experiment_results', 'model_output']) {
+  for (const field of ['experiment_results', 'model_output', 'run_index']) {
     if (manifest[field] && !existsSync(join(folder, manifest[field]))) throw new Error(`${manifest.id} declares ${field} but ${manifest[field]} is missing`);
+  }
+  if (manifest.run_index) {
+    const runIndex = JSON.parse(readFileSync(join(folder, manifest.run_index), 'utf8'));
+    if (!Array.isArray(runIndex.runs) || runIndex.runs.length === 0) throw new Error(`${manifest.id} run_index does not contain any runs`);
+    for (const run of runIndex.runs) {
+      if (!run.artifacts?.summary || !existsSync(join(folder, run.artifacts.summary))) throw new Error(`${manifest.id} run ${run.run_id} is missing summary artifact`);
+      if (!run.artifacts?.agent_states || !existsSync(join(folder, run.artifacts.agent_states))) throw new Error(`${manifest.id} run ${run.run_id} is missing agent state artifact`);
+      if (!run.artifacts?.events || !existsSync(join(folder, run.artifacts.events))) throw new Error(`${manifest.id} run ${run.run_id} is missing event artifact`);
+    }
   }
   manifest.created_at = String(manifest.created_at);
   return manifest;
