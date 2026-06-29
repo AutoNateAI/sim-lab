@@ -445,6 +445,8 @@ export class WocScene {
   private camYaw   = -Math.PI / 6 + Math.PI;  // start behind autonate
   private camDist  = 10;
   private camPitch = 0.42;  // radians down from horizontal (~24°)
+  // Smoothed character Y for camera — absorbs terrain-height jitter
+  private smoothedCharY = 1.5;
   // Jump state
   private jumpT      = 0;
   private isJumping  = false;
@@ -524,6 +526,7 @@ export class WocScene {
       const hubY = terrainHeight(0, 0);
       this.autonate.setPosition(4, hubY, 8);  // just off hub center, facing plaza
       this.autonate.setFacing(-Math.PI / 6);
+      this.smoothedCharY = terrainHeight(4, 8);  // seed smoother at exact start position
       this.scene.add(this.autonate.root);
       console.log('[autonate] loaded — lip sync ready:', this.autonate.lipSyncReady);
       console.log('[autonate] clips:', this.autonate.availableClips.join(', '));
@@ -939,8 +942,8 @@ export class WocScene {
           this.scenePlayer = null;
           this.onSceneSubtitle?.(null);
         }
-        // Camera still chases Autonate during scenes
-        if (this.autonate) this.updateChaseCamera(delta);
+        // Camera dollies to new shot position during scenes (cinematic = slower lerp)
+        if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.viewMode === 'human') {
         this.updateHumanMode(delta);
       }
@@ -1084,17 +1087,26 @@ export class WocScene {
     this.updateChaseCamera(dt);
   }
 
-  private updateChaseCamera(dt: number): void {
+  private updateChaseCamera(dt: number, cinematic = false): void {
     if (!this.autonate) return;
     const ap = this.autonate.root.position;
-    const hDist = Math.cos(this.camPitch) * this.camDist;
+
+    // Smooth terrain-Y separately — prevents camera bouncing over bumpy ground.
+    // Use a slow rate (×3) so the camera glides rather than snapping to every hill.
+    this.smoothedCharY += (ap.y - this.smoothedCharY) * Math.min(1, dt * 3);
+
+    const hDist     = Math.cos(this.camPitch) * this.camDist;
     const targetCam = new THREE.Vector3(
       ap.x + Math.sin(this.camYaw) * hDist,
-      ap.y + Math.sin(this.camPitch) * this.camDist + 1.5,
+      this.smoothedCharY + Math.sin(this.camPitch) * this.camDist + 1.5,
       ap.z + Math.cos(this.camYaw) * hDist,
     );
-    this.camera.position.lerp(targetCam, Math.min(1, dt * 7));
-    this.camera.lookAt(ap.x, ap.y + 1.5, ap.z);
+
+    // Cinematic mode uses a slower lerp so camera dollies gracefully between shots.
+    // Manual mode is faster so controls feel responsive.
+    const lerpSpeed = cinematic ? 2.5 : 5;
+    this.camera.position.lerp(targetCam, Math.min(1, dt * lerpSpeed));
+    this.camera.lookAt(ap.x, this.smoothedCharY + 1.5, ap.z);
   }
 
   // ─── AUTONATE API ─────────────────────────────────────────────────────────

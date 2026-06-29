@@ -29,39 +29,55 @@ export type SceneAct =
   | {kind: 'walk_to'; x: number; z: number; speed?: number}
   | {kind: 'talk'; text: string; clip?: string}
   | {kind: 'gesture'; clip: string; duration: number; loop?: boolean}
-  | {kind: 'cam'; yaw?: number; pitch?: number; dist?: number};
+  // relYaw is relative to character's current facing (PI = behind, 0 = face shot).
+  // yaw is absolute world angle (fallback if relYaw omitted).
+  | {kind: 'cam'; relYaw?: number; yaw?: number; pitch?: number; dist?: number};
 
 // ─── DEMO SCENE — "Day One in Eastbrook Vale" ─────────────────────────────────
-// Autonate arrives at the hub, surveys the inn, visits the training hall,
-// warms up at the campfire, and declares his mission.
-
-const HUB_Y_APPROX = 1.5; // rough ground Y at hub center (actual is terrain-sampled)
+// All cam acts use relYaw (relative to character facing) so angles are correct
+// regardless of where Autonate is looking:
+//   relYaw = PI   → over-the-shoulder (behind)
+//   relYaw = 0    → face shot (in front)
+//   relYaw = ±0.4 → 3/4 angle (adds depth)
+//
+// Building reference:
+//   Inn body:      (0,  y, 0)
+//   Training hall: (-14, y, 4)
+//   Campfire:      (6,  y, 6)
 
 export const DAY_ONE_SCENE: SceneAct[] = [
   {kind: 'wait', seconds: 0.4},
-  // Establish wide establishing shot — pull camera back
-  {kind: 'cam', yaw: Math.PI + 0.4, pitch: 0.55, dist: 16},
-  // Walk to inn entrance
+
+  // ── Establishing: wide over-shoulder shot looking toward village ──────────────
+  {kind: 'cam', relYaw: Math.PI, pitch: 0.52, dist: 18},
+
+  // ── Inn entrance: walk up, face inn, intro line ───────────────────────────────
   {kind: 'walk_to', x: 0, z: 10, speed: 6},
-  // Turn to face the inn
-  {kind: 'face', angle: Math.PI},
-  {kind: 'gesture', clip: 'Spellcast_Raise', duration: 1.8},
-  {kind: 'cam', yaw: Math.PI + 0.15, pitch: 0.32, dist: 9},
+  {kind: 'face', angle: Math.PI},          // face -Z toward inn center
+  {kind: 'gesture', clip: 'Spellcast_Raise', duration: 1.4},
+  // 3/4 front-left: camera between Autonate and inn — we see face + inn behind
+  {kind: 'cam', relYaw: 0.45, pitch: 0.2, dist: 8},
   {kind: 'talk', text: "Day one in Eastbrook Vale. I'm here to map the workforce and find my first consulting contract."},
-  // Walk to training hall
-  {kind: 'walk_to', x: -12, z: 10, speed: 6},
-  {kind: 'face', angle: Math.PI / 2},
-  {kind: 'cam', yaw: Math.PI * 1.5 + 0.2, pitch: 0.28, dist: 8},
+
+  // ── Training hall: approach, face hall, reflect ───────────────────────────────
+  {kind: 'walk_to', x: -14, z: 10, speed: 6},
+  {kind: 'face', angle: Math.PI},          // face -Z toward hall at z=4
+  // Opposite 3/4 angle for variety (front-right this time)
+  {kind: 'cam', relYaw: -0.45, pitch: 0.2, dist: 8},
   {kind: 'gesture', clip: 'Spellcasting', duration: 1.5},
-  {kind: 'talk', text: "The training hall is the key lever. Match the right people to the right skills, and we crack the employment gap."},
-  // Walk to campfire
+  {kind: 'talk', text: "The training hall is the key lever. Match the right people to skills, and we crack the employment gap."},
+
+  // ── Campfire: intimate close-up, then hero pull-back on cheer ─────────────────
   {kind: 'walk_to', x: 6, z: 6, speed: 5},
-  {kind: 'face', angle: -Math.PI / 3},
-  {kind: 'cam', yaw: -0.6, pitch: 0.25, dist: 7},
-  {kind: 'wait', seconds: 0.6},
+  {kind: 'face', angle: Math.PI * 0.15},   // slight angle — not perfectly straight
+  {kind: 'cam', relYaw: 0.35, pitch: 0.12, dist: 5.5},  // close low-angle face shot
+  {kind: 'wait', seconds: 0.5},
   {kind: 'talk', text: "Thirty days. Five contracts. Let's build something real."},
-  {kind: 'gesture', clip: 'Cheer', duration: 2.2},
-  // Walk back to starting position
+  // Pull back to wide hero shot for the cheer
+  {kind: 'cam', relYaw: Math.PI, pitch: 0.46, dist: 14},
+  {kind: 'gesture', clip: 'Cheer', duration: 2.4},
+
+  // ── Return to hub ─────────────────────────────────────────────────────────────
   {kind: 'walk_to', x: 4, z: 8, speed: 5},
   {kind: 'face', angle: -Math.PI / 6},
 ];
@@ -119,7 +135,10 @@ export class ScenePlayer {
         return true;
 
       case 'cam': {
-        if (act.yaw   !== undefined) this.ctrl.setCamYaw(act.yaw);
+        // relYaw is relative to character facing (PI = behind, 0 = face shot).
+        // This makes scenes portable regardless of which direction Autonate faces.
+        if (act.relYaw !== undefined) this.ctrl.setCamYaw(this.ctrl.getFacing() + act.relYaw);
+        else if (act.yaw !== undefined) this.ctrl.setCamYaw(act.yaw);
         if (act.pitch !== undefined) this.ctrl.setCamPitch(act.pitch);
         if (act.dist  !== undefined) this.ctrl.setCamDist(act.dist);
         return true;
