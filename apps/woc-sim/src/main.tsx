@@ -490,6 +490,8 @@ function App(): React.JSX.Element {
   const [outcomeOpen, setOutcomeOpen] = useState(false);
   const [selectedTraj, setSelectedTraj] = useState<AgentTrajectory | null>(null);
   const [followedIds, setFollowedIds] = useState<ReadonlySet<string>>(new Set());
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [avatarMouth, setAvatarMouth] = useState(0);
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -619,6 +621,10 @@ function App(): React.JSX.Element {
         </div>
         <div className="woc-controls">
           <button
+            className={`woc-btn ${avatarOpen ? 'active' : ''}`}
+            onClick={() => setAvatarOpen((v) => !v)}
+          >Avatar</button>
+          <button
             className={`woc-btn outcomes-btn ${outcomeOpen ? 'active' : ''}`}
             onClick={() => setOutcomeOpen((v) => !v)}
           >Outcomes</button>
@@ -651,6 +657,45 @@ function App(): React.JSX.Element {
           onClose={() => setSelectedTraj(null)}
           onJumpToWeek={handleJumpToWeek}
         />
+      )}
+
+      {/* Avatar control panel */}
+      {avatarOpen && (
+        <div className="avatar-panel">
+          <div className="avatar-panel-header">
+            <span className="avatar-panel-title">Autonate · Avatar</span>
+            <button className="avatar-panel-close" onClick={() => setAvatarOpen(false)}>×</button>
+          </div>
+          <div className="avatar-section-label">Pose</div>
+          <div className="avatar-poses">
+            {[
+              {clip: 'Idle',           label: 'Idle'},
+              {clip: 'Walking_A',      label: 'Walk'},
+              {clip: 'Spellcast_Raise',label: 'Present'},
+              {clip: 'Spellcasting',   label: 'Think'},
+              {clip: 'Cheer',          label: 'Cheer'},
+              {clip: 'Sit_Floor_Idle', label: 'Sit'},
+              {clip: 'Hit_A',          label: 'React'},
+            ].map(({clip, label}) => (
+              <button
+                key={clip}
+                className="avatar-pose-btn"
+                onClick={() => sceneRef.current?.playAutonatePose(clip)}
+              >{label}</button>
+            ))}
+          </div>
+          <div className="avatar-section-label">Lip sync — jaw open</div>
+          <input
+            type="range" min={0} max={1} step={0.01} value={avatarMouth}
+            className="avatar-mouth-slider"
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setAvatarMouth(v);
+              sceneRef.current?.setAutonateMouth(v);
+            }}
+          />
+          <div className="avatar-mouth-val">{(avatarMouth * 100).toFixed(0)}%</div>
+        </div>
       )}
 
       {/* Status legend */}

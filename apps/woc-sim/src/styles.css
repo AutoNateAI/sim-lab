@@ -355,3 +355,43 @@ body { background: #040810; }
 .hour-cell.kind-childcare .hour-label { color: #ffc850; }
 .hour-cell.kind-activity { background: rgba(100,200,255,0.12); border-color: rgba(100,200,255,0.18); }
 .hour-cell.kind-activity .hour-label { color: #64c8ff; }
+
+/* ─── AVATAR PANEL ─── */
+.avatar-panel {
+  position: absolute; top: 64px; right: 20px; width: 220px;
+  background: rgba(4,8,20,0.92); backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,204,170,0.25); border-radius: 12px;
+  padding: 14px; z-index: 30; display: flex; flex-direction: column; gap: 10px;
+}
+.avatar-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.avatar-panel-title {
+  font: 700 0.72rem/1 'Orbitron', monospace; color: #00CCAA; letter-spacing: 0.08em;
+}
+.avatar-panel-close {
+  background: none; border: none; color: rgba(255,255,255,0.4); font-size: 1.1rem;
+  cursor: pointer; padding: 0; line-height: 1;
+}
+.avatar-panel-close:hover { color: #fff; }
+.avatar-section-label {
+  font: 500 0.6rem/1 'DM Mono', monospace; color: rgba(0,204,170,0.6);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.avatar-poses {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+}
+.avatar-pose-btn {
+  background: rgba(0,204,170,0.08); border: 1px solid rgba(0,204,170,0.2);
+  border-radius: 6px; color: #e8f4ff; font: 500 0.65rem/1 'Space Grotesk', sans-serif;
+  padding: 7px 4px; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.avatar-pose-btn:hover {
+  background: rgba(0,204,170,0.2); border-color: rgba(0,204,170,0.5); color: #00CCAA;
+}
+.avatar-mouth-slider {
+  width: 100%; accent-color: #00CCAA;
+}
+.avatar-mouth-val {
+  font: 500 0.62rem/1 'DM Mono', monospace; color: rgba(0,204,170,0.7); text-align: right;
+}

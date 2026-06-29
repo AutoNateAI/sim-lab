@@ -3,6 +3,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import {AutonateCharacter} from './autonate';
 
 // ─── WoC WORLD CONSTANTS (Zone 1 — Eastbrook Vale) ───────────────────────────
 
@@ -428,6 +429,10 @@ export class WocScene {
   private animId = 0;
   private elapsed = 0;
 
+  // Protagonist avatar
+  private autonate: AutonateCharacter | null = null;
+  private autonateReady: Promise<void> = Promise.resolve();
+
   // Follow mode
   private readonly followedIds = new Set<string>();
   private readonly followArrows = new Map<string, THREE.Mesh>();
@@ -465,6 +470,7 @@ export class WocScene {
 
     this.buildWorld();
     this.modelsReady = this.preloadModels();
+    this.autonateReady = this.loadAutonate();
     this.startLoop();
 
     const ro = new ResizeObserver(() => this.handleResize());
@@ -476,6 +482,23 @@ export class WocScene {
     this.renderer.setSize(c.clientWidth, c.clientHeight, false);
     this.camera.aspect = c.clientWidth / c.clientHeight;
     this.camera.updateProjectionMatrix();
+  }
+
+  // Load Autonate avatar and place at hub
+  private async loadAutonate(): Promise<void> {
+    this.autonate = new AutonateCharacter();
+    try {
+      await this.autonate.load(this.loader, __WOC_PUBLIC__);
+      const hubY = terrainHeight(0, 0);
+      this.autonate.setPosition(4, hubY, 8);  // just off hub center, facing plaza
+      this.autonate.setFacing(-Math.PI / 6);
+      this.scene.add(this.autonate.root);
+      console.log('[autonate] loaded — lip sync ready:', this.autonate.lipSyncReady);
+      console.log('[autonate] clips:', this.autonate.availableClips.join(', '));
+    } catch (e) {
+      console.warn('[autonate] failed to load:', e);
+      this.autonate = null;
+    }
   }
 
   // Pre-load every GLB we might need so setAgents() is instant
@@ -860,6 +883,8 @@ export class WocScene {
         }
       }
 
+      this.autonate?.update(delta);
+
       this.renderer.render(this.scene, this.camera);
       this.animId = requestAnimationFrame(tick);
     };
@@ -875,4 +900,28 @@ export class WocScene {
   }
 
   getStatusLabels(): typeof STATUS_LABELS {return STATUS_LABELS;}
+
+  // ─── AUTONATE API ─────────────────────────────────────────────────────────
+
+  /** Play an animation clip on the Autonate avatar. No-op if not loaded yet. */
+  playAutonatePose(clip: string, loop = true): void {
+    this.autonate?.play(clip, loop);
+  }
+
+  /**
+   * Drive Autonate's lip sync jaw proxy.
+   * @param amplitude 0 = closed, 1 = fully open. Wire to Web Audio RMS.
+   */
+  setAutonateMouth(amplitude: number): void {
+    this.autonate?.setMouthOpen(amplitude);
+  }
+
+  /** Clips available on the Autonate rig. Empty until loaded. */
+  getAutonatePoses(): string[] {
+    return this.autonate?.availableClips ?? [];
+  }
+
+  get autonateLoaded(): boolean {
+    return this.autonate !== null;
+  }
 }
