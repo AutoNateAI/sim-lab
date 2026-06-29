@@ -1140,7 +1140,6 @@ export class WocScene {
         if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.productionPlayer) {
         this.productionPlayer.update(delta);
-        this.npcHandles.forEach(({mixer}) => mixer.update(delta));
         if (this.productionPlayer.done) {
           this.productionPlayer = null;
           this.onSceneSubtitle?.(null);
@@ -1834,14 +1833,10 @@ export class WocScene {
   /** Spawn a single ClaudeCraft prop on the stage. */
   spawnStageAsset(def: StageAssetDef): void {
     const floorY = terrainHeight(def.x, def.z);
-    const {group, light} = buildAsset(def, floorY);
+    const {group} = buildAsset(def, floorY);
     this.scene.add(group);
     this.stageAssets.push(group);
-    if (light) {
-      this.scene.add(light);
-      // Light is already inside the group, so no need to add separately
-      // but it's tracked for cleanup
-    }
+    // Campfire lights are already embedded inside the group — no separate add needed.
   }
 
   private loadProductionBeat(beat: ProductionBeat): void {
@@ -1923,6 +1918,17 @@ export class WocScene {
       setCamWide:      (npcId) => this.setCamWide(npcId),
       emitSubtitle:    (text) => this.onSceneSubtitle?.(text ?? null),
     };
+  }
+
+  /** Preview a production beat: loads stage + positions characters, no recording. */
+  previewProductionBeat(beat: ProductionBeat): void {
+    this.stopScene();
+    this.stopPlayback();
+    if (this.viewMode !== 'human') this.setViewMode('human');
+    this.loadProductionBeat(beat);
+    this.camPitch = 0.32;
+    this.camDist  = 12;
+    this.followLocked = true;
   }
 
   /** Load the beat stage and begin recording. Press stop to end. */

@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   dropout: '#882222',
 };
 
-// ─── TRAJECTORY TYPES ────────────────────────────────────────────────────────
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 type WeekSnapshot = {
   week: number;
@@ -46,6 +46,14 @@ type AgentTrajectory = {
   snapshots: WeekSnapshot[];
   weeksToEmployed: number | null;
   finalStatus: AgentStatus;
+};
+
+type SceneClip = {
+  beatId: string;
+  label: string;
+  take: number;
+  json: string;
+  duration: number; // seconds
 };
 
 // ─── CSV PARSING ─────────────────────────────────────────────────────────────
@@ -122,6 +130,12 @@ function fmtHour(h: number): string {
   const hh = Math.floor(h);
   const mm = Math.round((h % 1) * 60);
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function fmtDur(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -212,7 +226,6 @@ function OutcomeModal({
           <button className="modal-close-btn" onClick={onClose}>✕</button>
         </div>
         <div className="outcome-columns">
-          {/* Success */}
           <div className="outcome-col">
             <div className="outcome-col-header" style={{color: STATUS_COLORS.employed}}>
               <span className="col-status-dot" style={{background: STATUS_COLORS.employed}} />
@@ -224,7 +237,6 @@ function OutcomeModal({
               ))}
             </div>
           </div>
-          {/* In-progress */}
           {inProgress.length > 0 && (
             <div className="outcome-col">
               <div className="outcome-col-header" style={{color: STATUS_COLORS.training}}>
@@ -238,7 +250,6 @@ function OutcomeModal({
               </div>
             </div>
           )}
-          {/* Struggling */}
           <div className="outcome-col">
             <div className="outcome-col-header" style={{color: STATUS_COLORS.unaware}}>
               <span className="col-status-dot" style={{background: STATUS_COLORS.unaware}} />
@@ -273,23 +284,20 @@ function AgentStoryPanel({
 }): React.JSX.Element {
   const last = traj.snapshots[traj.snapshots.length - 1]!;
   const [storyWeek, setStoryWeek] = useState(traj.weeksToEmployed ?? last.week);
-  const [storyDay, setStoryDay] = useState(1); // Tue default (weekday)
+  const [storyDay, setStoryDay] = useState(1);
   const snap = traj.snapshots.find((s) => s.week === storyWeek) ?? last;
   const isFollowed = followedIds.has(traj.id);
 
-  // Reset storyWeek when traj changes
   useEffect(() => {
     setStoryWeek(traj.weeksToEmployed ?? last.week);
   }, [traj.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const HOURS = Array.from({length: 24}, (_, i) => i);
-
   const prevStatus = traj.snapshots.find((s) => s.week < storyWeek && s.status !== snap.status)?.status;
   const statusChanged = prevStatus !== undefined && prevStatus !== snap.status;
 
   return (
     <div className="story-panel">
-      {/* Header */}
       <div className="story-header">
         <div className="story-agent-meta">
           <div className="story-archetype">{traj.archetype}</div>
@@ -308,7 +316,6 @@ function AgentStoryPanel({
         </div>
       </div>
 
-      {/* 16-week journey timeline */}
       <div className="story-section">
         <div className="story-section-label">Journey · {traj.snapshots.length} weeks</div>
         <div className="story-timeline-dots">
@@ -328,8 +335,7 @@ function AgentStoryPanel({
             className="story-status-badge"
             style={{background: STATUS_COLORS[snap.status] + '33', color: STATUS_COLORS[snap.status]}}
           >
-            {snap.status}
-            {statusChanged && ' ↑'}
+            {snap.status}{statusChanged && ' ↑'}
           </span>
           <button
             className="jump-btn"
@@ -338,7 +344,6 @@ function AgentStoryPanel({
         </div>
       </div>
 
-      {/* Pressure bars */}
       <div className="story-section">
         <div className="story-section-label">State · Week {storyWeek}</div>
         {([
@@ -361,7 +366,6 @@ function AgentStoryPanel({
         )}
       </div>
 
-      {/* Hourly schedule for selected week */}
       <div className="story-section story-section-grow">
         <div className="story-section-label">Hourly · Week {storyWeek}</div>
         <div className="hourly-day-tabs">
@@ -411,9 +415,7 @@ function FollowBar({
       <span className="follow-bar-label">Following</span>
       {followed.map((t) => (
         <div key={t.id} className="follow-chip">
-          <button className="follow-chip-name" onClick={() => onSelect(t)}>
-            {t.archetype}
-          </button>
+          <button className="follow-chip-name" onClick={() => onSelect(t)}>{t.archetype}</button>
           <button className="follow-chip-remove" onClick={() => onRemove(t.id)}>×</button>
         </div>
       ))}
@@ -437,9 +439,7 @@ function EnhancedTimeline({
   return (
     <div className="enhanced-timeline">
       <button className="tl-play-btn" onClick={onPlayPause}>{isPlaying ? '⏸' : '▶'}</button>
-
       <div className="tl-controls">
-        {/* Day selector */}
         <div className="tl-row">
           <span className="tl-label">Day</span>
           <div className="tl-day-btns">
@@ -452,8 +452,6 @@ function EnhancedTimeline({
             ))}
           </div>
         </div>
-
-        {/* Hour slider */}
         <div className="tl-row">
           <span className="tl-label">Hour</span>
           <input
@@ -463,8 +461,6 @@ function EnhancedTimeline({
           />
           <span className="tl-val">{fmtHour(hour)}</span>
         </div>
-
-        {/* Week slider */}
         <div className="tl-row">
           <span className="tl-label">Wk {week}</span>
           <input
@@ -475,6 +471,163 @@ function EnhancedTimeline({
           <span className="tl-val">Wk {maxWeek}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── SCENE CARD (episode drawer) ─────────────────────────────────────────────
+
+function SceneCard({
+  beat,
+  isRecording,
+  isPreview,
+  clip,
+  hasNewRecording,
+  anyRecording,
+  onPreview,
+  onRecord,
+  onAddToPlaylist,
+}: {
+  beat: ProductionBeat;
+  isRecording: boolean;
+  isPreview: boolean;
+  clip: SceneClip | undefined;
+  hasNewRecording: boolean;
+  anyRecording: boolean;
+  onPreview: () => void;
+  onRecord: () => void;
+  onAddToPlaylist: () => void;
+}): React.JSX.Element {
+  const assetKinds = [...new Set(beat.stage.map(s => s.kind))].join(', ');
+  const npcCast = beat.cast.filter(m => m.id !== 'autonate');
+
+  return (
+    <div className={`scene-card ${isRecording ? 'recording' : ''} ${isPreview ? 'preview' : ''} ${clip ? 'has-clip' : ''}`}>
+      <div className="scene-card-header">
+        <span className="scene-card-label">{beat.label}</span>
+        {clip && (
+          <span className="scene-clip-badge" title={`Take ${clip.take} · ${fmtDur(clip.duration)}`}>
+            ✓ {fmtDur(clip.duration)}
+          </span>
+        )}
+      </div>
+      <div className="scene-card-desc">{beat.description}</div>
+      {beat.stage.length > 0 && (
+        <div className="scene-card-assets">{assetKinds}</div>
+      )}
+      {npcCast.length > 0 && (
+        <div className="scene-card-cast">
+          with {npcCast.map(m => m.id).join(', ')}
+        </div>
+      )}
+      <div className="scene-card-actions">
+        <button
+          className={`scene-preview-btn ${isPreview ? 'active' : ''}`}
+          onClick={onPreview}
+          disabled={anyRecording}
+          title="Load stage and position characters — no recording"
+        >
+          {isPreview ? '◉ Loaded' : '◎ Preview'}
+        </button>
+        <button
+          className={`scene-record-btn ${isRecording ? 'active' : ''}`}
+          onClick={onRecord}
+          disabled={anyRecording && !isRecording}
+          title={isRecording ? 'Stop this recording' : 'Record — automation runs the script'}
+        >
+          {isRecording ? '⏹ Stop' : '● Record'}
+        </button>
+      </div>
+      {hasNewRecording && (
+        <button className="scene-keep-btn" onClick={onAddToPlaylist}>
+          ✓ Add to Playlist
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── EPISODE DRAWER ───────────────────────────────────────────────────────────
+
+function EpisodeDrawer({
+  playlist,
+  productionBeatId,
+  previewBeatId,
+  lastRecordedBeatId,
+  hasRecording,
+  onPreview,
+  onRecord,
+  onAddToPlaylist,
+  onRemoveClip,
+  onStitch,
+}: {
+  playlist: SceneClip[];
+  productionBeatId: string | null;
+  previewBeatId: string | null;
+  lastRecordedBeatId: string | null;
+  hasRecording: boolean;
+  onPreview: (beat: ProductionBeat) => void;
+  onRecord: (beat: ProductionBeat) => void;
+  onAddToPlaylist: (beatId: string) => void;
+  onRemoveClip: (beatId: string) => void;
+  onStitch: () => void;
+}): React.JSX.Element {
+  const anyRecording = productionBeatId !== null;
+
+  return (
+    <div className="episode-drawer">
+      <div className="drawer-header">
+        <div className="drawer-title">EP001</div>
+        <div className="drawer-subtitle">The Invisible Architecture</div>
+      </div>
+
+      <div className="drawer-scenes">
+        {EP001_PRODUCTION.map((beat) => {
+          const clip = playlist.find(c => c.beatId === beat.id);
+          const hasNewRecording = lastRecordedBeatId === beat.id && hasRecording;
+          return (
+            <SceneCard
+              key={beat.id}
+              beat={beat}
+              isRecording={productionBeatId === beat.id}
+              isPreview={previewBeatId === beat.id && !productionBeatId}
+              clip={clip}
+              hasNewRecording={hasNewRecording}
+              anyRecording={anyRecording}
+              onPreview={() => onPreview(beat)}
+              onRecord={() => onRecord(beat)}
+              onAddToPlaylist={() => onAddToPlaylist(beat.id)}
+            />
+          );
+        })}
+      </div>
+
+      {playlist.length > 0 && (
+        <div className="drawer-playlist">
+          <div className="playlist-header">
+            PLAYLIST · {playlist.length} / {EP001_PRODUCTION.length}
+          </div>
+          {EP001_PRODUCTION
+            .map(b => playlist.find(c => c.beatId === b.id))
+            .filter((c): c is SceneClip => !!c)
+            .map(clip => (
+              <div key={clip.beatId} className="playlist-row">
+                <div className="playlist-row-info">
+                  <span className="playlist-row-label">{clip.label}</span>
+                  <span className="playlist-row-meta">T{clip.take} · {fmtDur(clip.duration)}</span>
+                </div>
+                <button
+                  className="playlist-remove-btn"
+                  onClick={() => onRemoveClip(clip.beatId)}
+                  title="Remove from playlist"
+                >✕</button>
+              </div>
+            ))}
+          <button className="stitch-btn" onClick={onStitch}>
+            🎬 Stitch EP001
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -507,12 +660,16 @@ function App(): React.JSX.Element {
   const [episodePaused, setEpisodePaused] = useState(false);
   const [playbackPaused, setPlaybackPaused] = useState(false);
   const [camOverrides, setCamOverrides] = useState<{t: number}[]>([]);
-  // NPC / portal / director state
   const [nearestNpc, setNearestNpc] = useState<EpisodeNpc | null>(null);
   const [dialogueLine, setDialogueLine] = useState<DialogueLine | null>(null);
   const [portalPrompt, setPortalPrompt] = useState<string | null>(null);
-  const [directorOpen, setDirectorOpen] = useState(false);
-  const [beatsDone, setBeatsDone] = useState<Set<string>>(new Set());
+
+  // Production studio state
+  const [productionBeatId, setProductionBeatId] = useState<string | null>(null);
+  const [previewBeatId, setPreviewBeatId] = useState<string | null>(null);
+  const [lastRecordedBeatId, setLastRecordedBeatId] = useState<string | null>(null);
+  const [playlist, setPlaylist] = useState<SceneClip[]>([]);
+  const [takeNumbers, setTakeNumbers] = useState<Record<string, number>>({});
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -522,7 +679,6 @@ function App(): React.JSX.Element {
   const displayMin = Math.round((hour - displayHour) * 60) % 60;
 
   selectedWeekRef.current = selectedWeek;
-
   const trajectories = useMemo(() => buildTrajectories(), []);
 
   // Build scene + load agents + episode NPCs
@@ -531,25 +687,21 @@ function App(): React.JSX.Element {
     if (!canvas) return;
     const scene = new WocScene(canvas);
     sceneRef.current = scene;
-    // Expose globally for Playwright inspection / debug console
     (window as unknown as Record<string, unknown>).__wocScene = scene;
     void scene.setAgents(getWeekAgents(selectedWeekRef.current), setStats);
     void scene.setEpisodeNpcs(EP001_NPCS, setNearestNpc, setDialogueLine, setPortalPrompt);
     return () => { scene.dispose(); sceneRef.current = null; delete (window as unknown as Record<string, unknown>).__wocScene; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reload agents when week changes
   useEffect(() => {
     if (!sceneRef.current) return;
     void sceneRef.current.setAgents(getWeekAgents(selectedWeek), setStats);
   }, [selectedWeek]);
 
-  // Update agent positions on every sim-time tick
   useEffect(() => {
     sceneRef.current?.update(day * 24 + hour);
   }, [day, hour]);
 
-  // Clock tick
   useEffect(() => {
     if (!isPlaying) return;
     const ms = clockMs(day, hour);
@@ -559,7 +711,6 @@ function App(): React.JSX.Element {
     return () => window.clearInterval(id);
   }, [isPlaying, day, hour]);
 
-  // Sync selectedWeek with clock
   useEffect(() => {
     const w = Math.min(Math.floor(clockMinute / MINUTES_PER_WEEK), maxWeek);
     const nearest = AVAILABLE_WEEKS.reduce(
@@ -690,7 +841,6 @@ function App(): React.JSX.Element {
   const handlePlayEpisodeAndRecord = useCallback(() => {
     if (!sceneRef.current) return;
     if (episodeRecording) {
-      // Stop early
       sceneRef.current.stopScene();
       sceneRef.current.stopRecording();
       if (recTimerRef.current) clearInterval(recTimerRef.current);
@@ -727,7 +877,6 @@ function App(): React.JSX.Element {
     if (episodePaused) {
       sceneRef.current.resumeEpisodeRecord();
       setEpisodePaused(false);
-      // Resume timer
       recTimerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
     } else {
       sceneRef.current.pauseEpisodeRecord();
@@ -767,7 +916,14 @@ function App(): React.JSX.Element {
     sceneRef.current?.jumpToSetup(setup);
   }, []);
 
-  const [productionBeatId, setProductionBeatId] = useState<string | null>(null);
+  // ── Production studio handlers ───────────────────────────────────────────
+
+  const handlePreviewScene = useCallback((beat: ProductionBeat) => {
+    if (!sceneRef.current || productionBeatId) return;
+    sceneRef.current.previewProductionBeat(beat);
+    setPreviewBeatId(beat.id);
+    setLastRecordedBeatId(null);
+  }, [productionBeatId]);
 
   const handleRecordProductionBeat = useCallback((beat: ProductionBeat) => {
     if (!sceneRef.current) return;
@@ -778,12 +934,15 @@ function App(): React.JSX.Element {
       if (recTimerRef.current) clearInterval(recTimerRef.current);
       setProductionBeatId(null);
       setRecording(false);
+      setLastRecordedBeatId(beat.id);
       setHasRecording(sceneRef.current.hasRecording);
       setRecTime(0);
       return;
     }
     setHasRecording(false);
+    setLastRecordedBeatId(null);
     setPlayingBack(false);
+    setPreviewBeatId(null);
     setRecTime(0);
     setProductionBeatId(beat.id);
     setRecording(true);
@@ -796,6 +955,7 @@ function App(): React.JSX.Element {
         if (recTimerRef.current) clearInterval(recTimerRef.current);
         setProductionBeatId(null);
         setRecording(false);
+        setLastRecordedBeatId(beat.id);
         setHasRecording(true);
         setRecTime(0);
         setSubtitle(null);
@@ -803,13 +963,63 @@ function App(): React.JSX.Element {
     );
   }, [productionBeatId]);
 
+  const handleAddToPlaylist = useCallback((beatId: string) => {
+    if (!sceneRef.current || !hasRecording) return;
+    const json = sceneRef.current.exportRecording();
+    const duration = sceneRef.current.recordingDuration;
+    const beat = EP001_PRODUCTION.find(b => b.id === beatId);
+    if (!beat) return;
+    const take = (takeNumbers[beatId] ?? 0) + 1;
+    setTakeNumbers(prev => ({...prev, [beatId]: take}));
+    setPlaylist(prev => {
+      const filtered = prev.filter(c => c.beatId !== beatId);
+      return [...filtered, {beatId, label: beat.label, take, json, duration}];
+    });
+    setLastRecordedBeatId(null);
+    setHasRecording(false);
+  }, [hasRecording, takeNumbers]);
+
+  const handleRemoveClip = useCallback((beatId: string) => {
+    setPlaylist(prev => prev.filter(c => c.beatId !== beatId));
+  }, []);
+
+  const handleStitch = useCallback(() => {
+    if (playlist.length === 0) return;
+    const ordered = EP001_PRODUCTION
+      .map(b => playlist.find(c => c.beatId === b.id))
+      .filter((c): c is SceneClip => !!c);
+
+    let timeOffset = 0;
+    const allFrames: Array<Record<string, unknown>> = [];
+    const allOverrides: Array<Record<string, unknown>> = [];
+
+    for (const clip of ordered) {
+      const data = JSON.parse(clip.json) as {
+        frames: Array<{t: number} & Record<string, unknown>>;
+        overrides: Array<{t: number} & Record<string, unknown>>;
+        version: number;
+        frameRate: number;
+      };
+      for (const f of data.frames) allFrames.push({...f, t: f.t + timeOffset});
+      for (const o of (data.overrides ?? [])) allOverrides.push({...o, t: o.t + timeOffset});
+      if (data.frames.length > 0) {
+        timeOffset += data.frames[data.frames.length - 1]!.t + 1 / 24;
+      }
+    }
+
+    const stitched = JSON.stringify({version: 2, frameRate: 24, frames: allFrames, overrides: allOverrides});
+    const blob = new Blob([stitched], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `ep001_stitched_${Date.now()}.json`;
+    a.click();
+  }, [playlist]);
+
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
     sceneRef.current?.setViewMode(next);
     setViewModeState(next);
-    // Human view: pause the sim clock so time runs real-time
     if (next === 'human') setIsPlaying(false);
-    // Spirit view: resume playing
     if (next === 'spirit') setIsPlaying(true);
   }, [viewMode]);
 
@@ -822,379 +1032,319 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', handler);
   }, [viewMode, handleToggleRecord]);
 
-  // Clean up recording timer on unmount
   useEffect(() => () => { if (recTimerRef.current) clearInterval(recTimerRef.current); }, []);
 
   const isHuman = viewMode === 'human';
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <div className="woc-shell">
-      <canvas ref={canvasRef} className="woc-canvas" />
 
-      {/* Header */}
-      <header className="woc-header">
-        <div className="woc-brand">
-          <span className="woc-brand-eyebrow">AutoNateAI · Sim Lab</span>
-          <strong className="woc-brand-title">WoC Sim</strong>
-          <span className="woc-brand-sub">{isHuman ? 'Human View · Eastbrook Vale' : 'Spirit View · Eastbrook Vale · Workforce'}</span>
-        </div>
-        <div className="woc-clock">
-          <div className="clock-time">{String(displayHour).padStart(2, '0')}:{String(displayMin).padStart(2, '0')}</div>
-          <div className="clock-day">Wk {selectedWeek} · {DAY_NAMES[day]}</div>
-        </div>
-        <div className="woc-controls">
-          <button
-            className={`woc-btn view-toggle-btn ${isHuman ? 'human-active' : ''}`}
-            onClick={handleToggleView}
-            title={isHuman ? 'Return to Spirit View (omniscient)' : 'Enter Human View (control Autonate)'}
-          >{isHuman ? '👁 Spirit View' : '🧑 Human View'}</button>
-          {!isHuman && (
+      {/* ── Stage: canvas + all overlays ── */}
+      <div className="woc-stage">
+        <canvas ref={canvasRef} className="woc-canvas" />
+
+        {/* Header */}
+        <header className="woc-header">
+          <div className="woc-brand">
+            <span className="woc-brand-eyebrow">AutoNateAI · Sim Lab</span>
+            <strong className="woc-brand-title">WoC Sim</strong>
+            <span className="woc-brand-sub">{isHuman ? 'Studio · Eastbrook Vale' : 'Spirit View · Eastbrook Vale · Workforce'}</span>
+          </div>
+          <div className="woc-clock">
+            <div className="clock-time">{String(displayHour).padStart(2, '0')}:{String(displayMin).padStart(2, '0')}</div>
+            <div className="clock-day">Wk {selectedWeek} · {DAY_NAMES[day]}</div>
+          </div>
+          <div className="woc-controls">
             <button
-              className={`woc-btn ${avatarOpen ? 'active' : ''}`}
-              onClick={() => setAvatarOpen((v) => !v)}
-            >Avatar</button>
-          )}
-          {!isHuman && (
-            <button
-              className={`woc-btn outcomes-btn ${outcomeOpen ? 'active' : ''}`}
-              onClick={() => setOutcomeOpen((v) => !v)}
-            >Outcomes</button>
-          )}
-        </div>
-      </header>
-
-      {/* Human View HUD */}
-      {isHuman && (
-        <div className="human-hud">
-          <div className="human-hud-mission">
-            <div className="human-hud-label">Mission · 30 Days</div>
-            <div className="human-hud-objective">Secure 5 AI consulting contracts</div>
-            <div className="human-hud-progress">
-              <div className="human-hud-pips">
-                {[0,1,2,3,4].map((i) => (
-                  <div key={i} className="human-hud-pip" />
-                ))}
-              </div>
-              <span className="human-hud-count">0 / 5</span>
-            </div>
-          </div>
-          <div className="human-hud-bottom">
-            {/* Recording indicator */}
-            {recording && (
-              <div className={`rec-indicator ${episodeRecording ? 'ep-rec' : ''}`}>
-                <span className="rec-dot" />
-                {episodeRecording ? 'EP REC' : 'REC'}{' '}
-                {String(Math.floor(recTime / 60)).padStart(2,'0')}:{String(recTime % 60).padStart(2,'0')}
-              </div>
-            )}
-
-            {/* Action buttons row */}
-            <div className="hud-btn-row">
-              {/* ── EP001 Record ── */}
-              {!playingBack && !recording && (
-                <button
-                  className={`woc-btn hud-action-btn ep-rec-btn ${episodeRecording && !episodePaused ? 'rec-active' : ''}`}
-                  onClick={handlePlayEpisodeAndRecord}
-                  title={episodeRecording ? 'Stop episode recording' : 'Auto-play EP001 and record (follow cam + trackpad)'}
-                  disabled={false}
-                >
-                  {episodeRecording ? '⏹ Stop EP' : '● Record EP001'}
-                </button>
-              )}
-
-              {/* ── Pause / Resume during EP REC ── */}
-              {episodeRecording && (
-                <button
-                  className={`woc-btn hud-action-btn ${episodePaused ? 'pause-active' : ''}`}
-                  onClick={handlePauseEpisode}
-                  title={episodePaused ? 'Resume — continues recording from here (cut point saved)' : 'Pause — adjust camera or reposition Autonate'}
-                >
-                  {episodePaused ? '▶ Resume' : '⏸ Pause'}
-                </button>
-              )}
-
-              {/* ── Manual record ── */}
-              {!episodeRecording && !playingBack && (
-                <button
-                  className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
-                  onClick={handleToggleRecord}
-                  title={recording ? 'Stop recording (R)' : 'Manual record (R)'}
-                  disabled={sceneRunning}
-                >
-                  {recording ? '⏹ Stop' : '⏺ Manual'}
-                </button>
-              )}
-
-              {/* ── Replay controls ── */}
-              {hasRecording && !recording && (
-                playingBack ? (
-                  <>
-                    <button
-                      className={`woc-btn hud-action-btn ${playbackPaused ? 'pause-active' : ''}`}
-                      onClick={handlePausePlayback}
-                      title={playbackPaused ? 'Resume playback' : 'Pause — adjust camera, then pin it'}
-                    >
-                      {playbackPaused ? '▶ Resume' : '⏸ Pause'}
-                    </button>
-                    {playbackPaused && (
-                      <button
-                        className="woc-btn hud-action-btn pin-btn"
-                        onClick={handlePinCamera}
-                        title="Save current camera angle as override keyframe at this timestamp"
-                      >
-                        📍 Pin Camera
-                      </button>
-                    )}
-                    <button className="woc-btn hud-action-btn" onClick={handleStopPlayback}>⏹ Stop</button>
-                  </>
-                ) : (
-                  <>
-                    <button className="woc-btn hud-action-btn replay-btn" onClick={handlePlayback}>▶ Replay</button>
-                    {camOverrides.length > 0 && (
-                      <button
-                        className="woc-btn hud-action-btn"
-                        onClick={handleClearOverrides}
-                        title={`Clear ${camOverrides.length} camera override${camOverrides.length > 1 ? 's' : ''}`}
-                      >
-                        ✕ {camOverrides.length} pins
-                      </button>
-                    )}
-                    <button className="woc-btn hud-action-btn export-btn" onClick={handleExportRecording} title="Export with camera overrides applied">↓ Export</button>
-                  </>
-                )
-              )}
-
-              {/* ── Scene preview (dev) ── */}
-              {!recording && !hasRecording && !episodeRecording && (
-                <button
-                  className={`woc-btn hud-action-btn ${sceneRunning ? 'scene-active' : ''}`}
-                  onClick={handlePlayScene}
-                  title="Preview scripted scene (no record)"
-                >
-                  {sceneRunning ? '⏹ Scene' : '▶ Preview'}
-                </button>
-              )}
-            </div>
-
-            {/* Paused episode banner */}
-            {episodePaused && (
-              <div className="paused-banner">
-                ⏸ PAUSED · drag trackpad to orbit · arrow keys to reposition Autonate · ▶ Resume when ready
-              </div>
-            )}
-
-            {/* Paused playback banner */}
-            {playbackPaused && (
-              <div className="paused-banner pin-mode">
-                ⏸ PAUSED · drag trackpad to set camera angle · 📍 Pin Camera to save · ▶ Resume
-              </div>
-            )}
-
-            {/* Controls hint */}
-            {!recording && !playingBack && !episodePaused && (
-              <div className="human-hud-controls">
-                <span className="human-hud-key">↑ ↓ ← →</span> Move
-                <span className="human-hud-divider">·</span>
-                <span className="human-hud-key">drag</span> Camera
-                <span className="human-hud-divider">·</span>
-                <span className="human-hud-key">scroll</span> Zoom
-                <span className="human-hud-divider">·</span>
-                <span className="human-hud-key">Space</span> Jump
-                <span className="human-hud-divider">·</span>
-                <span className="human-hud-key">R</span> Record
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Scene subtitle overlay */}
-      {subtitle && !dialogueLine && (
-        <div className="scene-subtitle">
-          <div className="scene-subtitle-inner">{subtitle}</div>
-        </div>
-      )}
-
-      {/* Dialogue overlay */}
-      {dialogueLine && (
-        <div className={`dialogue-overlay ${dialogueLine.isAutonate ? 'autonate-line' : 'npc-line'}`}>
-          <div className="dialogue-speaker">{dialogueLine.speaker}</div>
-          <div className="dialogue-text">"{dialogueLine.text}"</div>
-          <div className="dialogue-hint">E — continue</div>
-        </div>
-      )}
-
-      {/* Portal prompt */}
-      {isHuman && portalPrompt && !dialogueLine && (
-        <div className="portal-prompt">{portalPrompt}</div>
-      )}
-
-      {/* NPC interact prompt */}
-      {isHuman && nearestNpc && !dialogueLine && !portalPrompt && (
-        <div className="interact-prompt">
-          <span className="interact-key">E</span>
-          Talk to {nearestNpc.name} · <em>{nearestNpc.role}</em>
-        </div>
-      )}
-
-      {/* Director HUD — Episode 1 beat checklist */}
-      {isHuman && (
-        <div className={`director-panel ${directorOpen ? 'open' : ''}`}>
-          <button className="director-toggle" onClick={() => setDirectorOpen(v => !v)}>
-            {directorOpen ? '✕' : '🎬'} {directorOpen ? 'Close' : 'Director'}
-          </button>
-          {directorOpen && (
-            <div className="director-content">
-              <div className="director-title">EP001 · The Invisible Architecture</div>
-              {EP001_BEATS.map((beat) => {
-                const done = beatsDone.has(beat.id);
-                const setup = EP001_SETUPS.find(s => s.beatId === beat.id);
-                const prodBeat = EP001_PRODUCTION.find(b => b.id === beat.id);
-                const isRecordingThis = productionBeatId === beat.id;
-                return (
-                  <div key={beat.id} className={`director-beat ${done ? 'done' : ''} ${isRecordingThis ? 'recording' : ''}`}>
-                    <button className="beat-check" onClick={() => setBeatsDone(prev => {
-                      const next = new Set(prev);
-                      done ? next.delete(beat.id) : next.add(beat.id);
-                      return next;
-                    })}>
-                      {done ? '✓' : '○'}
-                    </button>
-                    <div className="beat-info">
-                      <div className="beat-label">{beat.label}</div>
-                      <div className="beat-desc">{beat.description}</div>
-                      <div className="beat-loc">📍 {beat.location}</div>
-                      <div className="beat-actions">
-                        {setup && (
-                          <button
-                            className="beat-jump-btn"
-                            onClick={() => handleJumpToSetup(setup)}
-                            title={`Teleport to ${beat.label} · ${setup.primary.desc}`}
-                            disabled={!!productionBeatId}
-                          >
-                            ↑ Jump
-                          </button>
-                        )}
-                        {prodBeat && (
-                          <button
-                            className={`beat-record-btn ${isRecordingThis ? 'active' : ''}`}
-                            onClick={() => handleRecordProductionBeat(prodBeat)}
-                            title={isRecordingThis ? 'Stop recording this beat' : 'Record this beat — auto camera, clean stage'}
-                            disabled={!!productionBeatId && !isRecordingThis}
-                          >
-                            {isRecordingThis ? '⏹ Stop' : '● Record'}
-                          </button>
-                        )}
-                        {setup && <span className="beat-cam-hint">{setup.primary.desc}</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Follow bar — spirit only */}
-      {!isHuman && <FollowBar
-        followedIds={followedIds}
-        trajectories={trajectories}
-        onRemove={handleRemoveFollow}
-        onClearAll={handleClearFollows}
-        onSelect={setSelectedTraj}
-      />}
-
-      {/* Outcome modal — spirit only */}
-      {!isHuman && outcomeOpen && (
-        <OutcomeModal
-          onSelectAgent={setSelectedTraj}
-          onClose={() => setOutcomeOpen(false)}
-        />
-      )}
-
-      {/* Agent story panel — spirit only */}
-      {!isHuman && selectedTraj && (
-        <AgentStoryPanel
-          traj={selectedTraj}
-          followedIds={followedIds}
-          onToggleFollow={handleToggleFollow}
-          onClose={() => setSelectedTraj(null)}
-          onJumpToWeek={handleJumpToWeek}
-        />
-      )}
-
-      {/* Avatar control panel */}
-      {!isHuman && avatarOpen && (
-        <div className="avatar-panel">
-          <div className="avatar-panel-header">
-            <span className="avatar-panel-title">Autonate · Avatar</span>
-            <button className="avatar-panel-close" onClick={() => setAvatarOpen(false)}>×</button>
-          </div>
-          <div className="avatar-section-label">Pose</div>
-          <div className="avatar-poses">
-            {[
-              {clip: 'Idle',           label: 'Idle'},
-              {clip: 'Walking_A',      label: 'Walk'},
-              {clip: 'Spellcast_Raise',label: 'Present'},
-              {clip: 'Spellcasting',   label: 'Think'},
-              {clip: 'Cheer',          label: 'Cheer'},
-              {clip: 'Sit_Floor_Idle', label: 'Sit'},
-              {clip: 'Hit_A',          label: 'React'},
-            ].map(({clip, label}) => (
+              className={`woc-btn view-toggle-btn ${isHuman ? 'human-active' : ''}`}
+              onClick={handleToggleView}
+              title={isHuman ? 'Return to Spirit View' : 'Enter Studio (control Autonate)'}
+            >{isHuman ? '👁 Spirit View' : '🎬 Studio'}</button>
+            {!isHuman && (
               <button
-                key={clip}
-                className="avatar-pose-btn"
-                onClick={() => sceneRef.current?.playAutonatePose(clip)}
-              >{label}</button>
+                className={`woc-btn ${avatarOpen ? 'active' : ''}`}
+                onClick={() => setAvatarOpen((v) => !v)}
+              >Avatar</button>
+            )}
+            {!isHuman && (
+              <button
+                className={`woc-btn outcomes-btn ${outcomeOpen ? 'active' : ''}`}
+                onClick={() => setOutcomeOpen((v) => !v)}
+              >Outcomes</button>
+            )}
+          </div>
+        </header>
+
+        {/* Human View HUD */}
+        {isHuman && (
+          <div className="human-hud">
+            <div className="human-hud-mission">
+              <div className="human-hud-label">Mission · 30 Days</div>
+              <div className="human-hud-objective">Secure 5 AI consulting contracts</div>
+              <div className="human-hud-progress">
+                <div className="human-hud-pips">
+                  {[0,1,2,3,4].map((i) => <div key={i} className="human-hud-pip" />)}
+                </div>
+                <span className="human-hud-count">0 / 5</span>
+              </div>
+            </div>
+            <div className="human-hud-bottom">
+              {recording && (
+                <div className={`rec-indicator ${episodeRecording ? 'ep-rec' : ''}`}>
+                  <span className="rec-dot" />
+                  {productionBeatId ? 'SCENE REC' : episodeRecording ? 'EP REC' : 'REC'}{' '}
+                  {String(Math.floor(recTime / 60)).padStart(2,'0')}:{String(recTime % 60).padStart(2,'0')}
+                </div>
+              )}
+
+              <div className="hud-btn-row">
+                {/* EP001 Record */}
+                {!playingBack && !recording && (
+                  <button
+                    className={`woc-btn hud-action-btn ep-rec-btn ${episodeRecording && !episodePaused ? 'rec-active' : ''}`}
+                    onClick={handlePlayEpisodeAndRecord}
+                    disabled={!!productionBeatId}
+                    title={episodeRecording ? 'Stop episode recording' : 'Auto-play full EP001 and record'}
+                  >
+                    {episodeRecording ? '⏹ Stop EP' : '● Record EP001'}
+                  </button>
+                )}
+
+                {episodeRecording && (
+                  <button
+                    className={`woc-btn hud-action-btn ${episodePaused ? 'pause-active' : ''}`}
+                    onClick={handlePauseEpisode}
+                  >
+                    {episodePaused ? '▶ Resume' : '⏸ Pause'}
+                  </button>
+                )}
+
+                {!episodeRecording && !playingBack && !productionBeatId && (
+                  <button
+                    className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
+                    onClick={handleToggleRecord}
+                    disabled={sceneRunning}
+                    title={recording ? 'Stop recording (R)' : 'Manual record (R)'}
+                  >
+                    {recording ? '⏹ Stop' : '⏺ Manual'}
+                  </button>
+                )}
+
+                {hasRecording && !recording && !productionBeatId && (
+                  playingBack ? (
+                    <>
+                      <button
+                        className={`woc-btn hud-action-btn ${playbackPaused ? 'pause-active' : ''}`}
+                        onClick={handlePausePlayback}
+                      >
+                        {playbackPaused ? '▶ Resume' : '⏸ Pause'}
+                      </button>
+                      {playbackPaused && (
+                        <button className="woc-btn hud-action-btn pin-btn" onClick={handlePinCamera}>
+                          📍 Pin Camera
+                        </button>
+                      )}
+                      <button className="woc-btn hud-action-btn" onClick={handleStopPlayback}>⏹ Stop</button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="woc-btn hud-action-btn replay-btn" onClick={handlePlayback}>▶ Replay</button>
+                      {camOverrides.length > 0 && (
+                        <button className="woc-btn hud-action-btn" onClick={handleClearOverrides}>
+                          ✕ {camOverrides.length} pins
+                        </button>
+                      )}
+                      <button className="woc-btn hud-action-btn export-btn" onClick={handleExportRecording}>↓ Export</button>
+                    </>
+                  )
+                )}
+
+                {!recording && !hasRecording && !episodeRecording && !productionBeatId && (
+                  <button
+                    className={`woc-btn hud-action-btn ${sceneRunning ? 'scene-active' : ''}`}
+                    onClick={handlePlayScene}
+                    title="Preview scripted scene (no record)"
+                  >
+                    {sceneRunning ? '⏹ Scene' : '▶ Preview'}
+                  </button>
+                )}
+              </div>
+
+              {episodePaused && (
+                <div className="paused-banner">
+                  ⏸ PAUSED · drag trackpad to orbit · arrow keys to reposition Autonate · ▶ Resume when ready
+                </div>
+              )}
+              {playbackPaused && (
+                <div className="paused-banner pin-mode">
+                  ⏸ PAUSED · drag trackpad to set camera angle · 📍 Pin Camera to save · ▶ Resume
+                </div>
+              )}
+              {!recording && !playingBack && !episodePaused && (
+                <div className="human-hud-controls">
+                  <span className="human-hud-key">↑ ↓ ← →</span> Move
+                  <span className="human-hud-divider">·</span>
+                  <span className="human-hud-key">drag</span> Camera
+                  <span className="human-hud-divider">·</span>
+                  <span className="human-hud-key">scroll</span> Zoom
+                  <span className="human-hud-divider">·</span>
+                  <span className="human-hud-key">Space</span> Jump
+                  <span className="human-hud-divider">·</span>
+                  <span className="human-hud-key">R</span> Record
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Scene subtitle */}
+        {subtitle && !dialogueLine && (
+          <div className="scene-subtitle">
+            <div className="scene-subtitle-inner">{subtitle}</div>
+          </div>
+        )}
+
+        {/* Dialogue overlay */}
+        {dialogueLine && (
+          <div className={`dialogue-overlay ${dialogueLine.isAutonate ? 'autonate-line' : 'npc-line'}`}>
+            <div className="dialogue-speaker">{dialogueLine.speaker}</div>
+            <div className="dialogue-text">"{dialogueLine.text}"</div>
+            <div className="dialogue-hint">E — continue</div>
+          </div>
+        )}
+
+        {/* Portal prompt */}
+        {isHuman && portalPrompt && !dialogueLine && (
+          <div className="portal-prompt">{portalPrompt}</div>
+        )}
+
+        {/* NPC interact prompt */}
+        {isHuman && nearestNpc && !dialogueLine && !portalPrompt && (
+          <div className="interact-prompt">
+            <span className="interact-key">E</span>
+            Talk to {nearestNpc.name} · <em>{nearestNpc.role}</em>
+          </div>
+        )}
+
+        {/* Follow bar — spirit only */}
+        {!isHuman && <FollowBar
+          followedIds={followedIds}
+          trajectories={trajectories}
+          onRemove={handleRemoveFollow}
+          onClearAll={handleClearFollows}
+          onSelect={setSelectedTraj}
+        />}
+
+        {/* Outcome modal — spirit only */}
+        {!isHuman && outcomeOpen && (
+          <OutcomeModal
+            onSelectAgent={setSelectedTraj}
+            onClose={() => setOutcomeOpen(false)}
+          />
+        )}
+
+        {/* Agent story panel — spirit only */}
+        {!isHuman && selectedTraj && (
+          <AgentStoryPanel
+            traj={selectedTraj}
+            followedIds={followedIds}
+            onToggleFollow={handleToggleFollow}
+            onClose={() => setSelectedTraj(null)}
+            onJumpToWeek={handleJumpToWeek}
+          />
+        )}
+
+        {/* Avatar control panel */}
+        {!isHuman && avatarOpen && (
+          <div className="avatar-panel">
+            <div className="avatar-panel-header">
+              <span className="avatar-panel-title">Autonate · Avatar</span>
+              <button className="avatar-panel-close" onClick={() => setAvatarOpen(false)}>×</button>
+            </div>
+            <div className="avatar-section-label">Pose</div>
+            <div className="avatar-poses">
+              {[
+                {clip: 'Idle',           label: 'Idle'},
+                {clip: 'Walking_A',      label: 'Walk'},
+                {clip: 'Spellcast_Raise',label: 'Present'},
+                {clip: 'Spellcasting',   label: 'Think'},
+                {clip: 'Cheer',          label: 'Cheer'},
+                {clip: 'Sit_Floor_Idle', label: 'Sit'},
+                {clip: 'Hit_A',          label: 'React'},
+              ].map(({clip, label}) => (
+                <button
+                  key={clip}
+                  className="avatar-pose-btn"
+                  onClick={() => sceneRef.current?.playAutonatePose(clip)}
+                >{label}</button>
+              ))}
+            </div>
+            <div className="avatar-section-label">Lip sync — jaw open</div>
+            <input
+              type="range" min={0} max={1} step={0.01} value={avatarMouth}
+              className="avatar-mouth-slider"
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setAvatarMouth(v);
+                sceneRef.current?.setAutonateMouth(v);
+              }}
+            />
+            <div className="avatar-mouth-val">{(avatarMouth * 100).toFixed(0)}%</div>
+          </div>
+        )}
+
+        {/* Status legend — spirit only */}
+        {!isHuman && <StatusLegend stats={stats} />}
+
+        {/* Zone map key — spirit only */}
+        {!isHuman && (
+          <div className="woc-map-key">
+            <div className="map-key-title">Eastbrook Vale</div>
+            {[
+              {color: '#00d4ff', label: 'Hub town'},
+              {color: '#00ff88', label: 'Points of interest'},
+              {color: '#ffb800', label: 'Camps / mines'},
+              {color: '#ff2d6b', label: 'Danger zones'},
+            ].map(({color, label}) => (
+              <div key={label} className="map-key-row">
+                <div className="map-key-dot" style={{background: color, boxShadow: `0 0 5px ${color}`}} />
+                <span>{label}</span>
+              </div>
             ))}
           </div>
-          <div className="avatar-section-label">Lip sync — jaw open</div>
-          <input
-            type="range" min={0} max={1} step={0.01} value={avatarMouth}
-            className="avatar-mouth-slider"
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setAvatarMouth(v);
-              sceneRef.current?.setAutonateMouth(v);
-            }}
+        )}
+
+        {/* Enhanced timeline — spirit only */}
+        {!isHuman && (
+          <EnhancedTimeline
+            week={selectedWeek} day={day} hour={hour} maxWeek={maxWeek}
+            isPlaying={isPlaying}
+            onWeekChange={handleWeekChange}
+            onDayChange={handleDayChange}
+            onHourChange={handleHourChange}
+            onPlayPause={() => setIsPlaying((v) => !v)}
           />
-          <div className="avatar-mouth-val">{(avatarMouth * 100).toFixed(0)}%</div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Status legend — spirit only */}
-      {!isHuman && <StatusLegend stats={stats} />}
-
-      {/* Zone map key — spirit only */}
-      {!isHuman && (
-        <div className="woc-map-key">
-          <div className="map-key-title">Eastbrook Vale</div>
-          {[
-            {color: '#00d4ff', label: 'Hub town'},
-            {color: '#00ff88', label: 'Points of interest'},
-            {color: '#ffb800', label: 'Camps / mines'},
-            {color: '#ff2d6b', label: 'Danger zones'},
-          ].map(({color, label}) => (
-            <div key={label} className="map-key-row">
-              <div className="map-key-dot" style={{background: color, boxShadow: `0 0 5px ${color}`}} />
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Enhanced timeline — spirit only */}
-      {!isHuman && (
-        <EnhancedTimeline
-          week={selectedWeek} day={day} hour={hour} maxWeek={maxWeek}
-          isPlaying={isPlaying}
-          onWeekChange={handleWeekChange}
-          onDayChange={handleDayChange}
-          onHourChange={handleHourChange}
-          onPlayPause={() => setIsPlaying((v) => !v)}
+      {/* ── Episode Drawer: scene list + playlist ── */}
+      {isHuman && (
+        <EpisodeDrawer
+          playlist={playlist}
+          productionBeatId={productionBeatId}
+          previewBeatId={previewBeatId}
+          lastRecordedBeatId={lastRecordedBeatId}
+          hasRecording={hasRecording}
+          onPreview={handlePreviewScene}
+          onRecord={handleRecordProductionBeat}
+          onAddToPlaylist={handleAddToPlaylist}
+          onRemoveClip={handleRemoveClip}
+          onStitch={handleStitch}
         />
       )}
+
     </div>
   );
 }
