@@ -477,6 +477,7 @@ export class WocScene {
   private onDialogueLine: ((line: DialogueLine | null) => void) | null = null;
   private dialogueNpc: EpisodeNpc | null = null;
   private dialogueLineIdx = -1;
+  private _nearestNpcForInteract: EpisodeNpc | null = null;
 
   // Portals — pairs of linked teleport rings
   private portalMeshes: THREE.Mesh[] = [];
@@ -1318,6 +1319,7 @@ export class WocScene {
         const d = Math.sqrt(dx * dx + dz * dz);
         if (d < closestDist) { closestDist = d; closestNpc = npc; }
       }
+      this._nearestNpcForInteract = closestNpc;
       this.onNearestNpc?.(closestNpc);
     }
   }
@@ -1338,9 +1340,11 @@ export class WocScene {
       return;
     }
 
-    // NPC dialogue
+    // NPC dialogue — start if near an NPC, advance if already in dialogue
     if (this.dialogueNpc) {
       this.advanceDialogue();
+    } else if (this._nearestNpcForInteract) {
+      this.startDialogue(this._nearestNpcForInteract);
     }
   }
 
@@ -1384,8 +1388,9 @@ export class WocScene {
   }
 
   endDialogue(): void {
-    this.dialogueNpc     = null;
-    this.dialogueLineIdx = -1;
+    this.dialogueNpc            = null;
+    this.dialogueLineIdx        = -1;
+    this._nearestNpcForInteract = null;
     this.onDialogueLine?.(null);
     this.autonate?.play('Idle', true);
   }
