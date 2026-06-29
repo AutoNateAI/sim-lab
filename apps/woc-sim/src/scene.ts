@@ -440,8 +440,22 @@ export class WocScene {
   private autonateIsWalking = false;
   private spiritCamPos = new THREE.Vector3(0, 120, -180);
   private spiritCamTarget = new THREE.Vector3(0, 2, 0);
-  private onKeyDown = (e: KeyboardEvent): void => { this.keys.add(e.code); };
-  private onKeyUp   = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
+  // Camera orbit (WASD) — independent of character facing (arrow keys)
+  private camYaw   = -Math.PI / 6 + Math.PI;  // start behind autonate
+  private camDist  = 10;
+  private camPitch = 0.42;  // radians down from horizontal (~24°)
+  // Jump state
+  private jumpT      = 0;
+  private isJumping  = false;
+  private jumpY      = 0;
+  private onKeyDown = (e: KeyboardEvent): void => {
+    this.keys.add(e.code);
+    if (e.code === 'Space' && this.viewMode === 'human' && !this.isJumping) {
+      e.preventDefault();
+      this.startJump();
+    }
+  };
+  private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
 
   // Follow mode
   private readonly followedIds = new Set<string>();
@@ -456,12 +470,12 @@ export class WocScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 0.95;
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a1520);
-    this.scene.fog = new THREE.Fog(0x0a1520, 280, 500);
+    this.scene.background = new THREE.Color(0x6BBDE3);
+    this.scene.fog = new THREE.Fog(0x9BD0EA, 240, 480);
 
     this.camera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, 0.5, 600);
     this.camera.position.set(0, 120, -180);
@@ -534,18 +548,33 @@ export class WocScene {
   }
 
   private buildWorld(): void {
-    // ── Lighting ──────────────────────────────────────────────────────────────
-    this.scene.add(new THREE.AmbientLight(0x203040, 1.2));
+    // ── Sky ───────────────────────────────────────────────────────────────────
+    this.scene.background = new THREE.Color(0x6BBDE3);   // clear daytime sky
+    this.scene.fog = new THREE.Fog(0x9BD0EA, 240, 480);  // soft horizon haze
 
-    const sun = new THREE.DirectionalLight(0xfff4e0, 2.8);
-    sun.position.set(120, 180, -90);
+    // ── Lighting ──────────────────────────────────────────────────────────────
+    // Warm ambient fills shadows so nothing goes black
+    this.scene.add(new THREE.AmbientLight(0xfff4d8, 2.4));
+
+    // Main sun — high overhead angle keeps shadows short and crisp
+    const sun = new THREE.DirectionalLight(0xfffbe8, 2.0);
+    sun.position.set(50, 260, 80);    // steep Y → short shadows
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, {near: 1, far: 500, left: -200, right: 200, top: 200, bottom: -200});
+    sun.shadow.normalBias = 0.06;     // suppress shadow acne on terrain
+    sun.shadow.bias = -0.0005;
+    Object.assign(sun.shadow.camera, {near: 10, far: 420, left: -180, right: 180, top: 180, bottom: -180});
     this.scene.add(sun);
-    const fill = new THREE.DirectionalLight(0x4060a0, 0.6);
-    fill.position.set(-60, 40, 120);
-    this.scene.add(fill);
+
+    // Cool sky fill from opposite hemisphere — softens shadow sides
+    const skyFill = new THREE.DirectionalLight(0xb8d8f0, 1.1);
+    skyFill.position.set(-80, 120, -60);
+    this.scene.add(skyFill);
+
+    // Warm ground bounce — subtle warmth on undersides
+    const bounce = new THREE.DirectionalLight(0xffe8a0, 0.35);
+    bounce.position.set(0, -80, 0);
+    this.scene.add(bounce);
 
     // ── Terrain ───────────────────────────────────────────────────────────────
     const terrain = new THREE.Mesh(
@@ -558,7 +587,7 @@ export class WocScene {
     // ── Water ─────────────────────────────────────────────────────────────────
     const water = new THREE.Mesh(
       new THREE.PlaneGeometry(360, 360),
-      new THREE.MeshStandardMaterial({color: 0x0a2844, roughness: 0.1, metalness: 0.5, transparent: true, opacity: 0.88}),
+      new THREE.MeshStandardMaterial({color: 0x1a6090, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0.82}),
     );
     water.rotation.x = -Math.PI / 2;
     water.position.y = WATER_LEVEL;
@@ -952,68 +981,97 @@ export class WocScene {
 
   private snapHumanCamera(): void {
     if (!this.autonate) return;
+    // Sync camYaw to be directly behind character on entry
+    this.camYaw = this.autonateFacing + Math.PI;
     const pos = this.autonate.root.position;
-    const f   = this.autonateFacing;
+    const h = Math.cos(this.camPitch) * this.camDist;
     this.camera.position.set(
-      pos.x - Math.sin(f) * 10,
-      pos.y + 5,
-      pos.z - Math.cos(f) * 10,
+      pos.x + Math.sin(this.camYaw) * h,
+      pos.y + Math.sin(this.camPitch) * this.camDist + 1.5,
+      pos.z + Math.cos(this.camYaw) * h,
     );
     this.camera.lookAt(pos.x, pos.y + 1.5, pos.z);
+  }
+
+  private startJump(): void {
+    this.isJumping = true;
+    this.jumpT = 0;
+    this.autonate?.play('Jump_Idle', false, 0.1);
   }
 
   private updateHumanMode(dt: number): void {
     if (!this.autonate) return;
 
-    const MOVE_SPEED = 7;    // world units / sec
-    const TURN_SPEED = 2.4;  // radians / sec
-    const CAM_DIST   = 10;
-    const CAM_HEIGHT = 5;
+    const MOVE_SPEED  = 7;    // world units / sec — character
+    const TURN_SPEED  = 2.4;  // radians / sec    — character (arrow keys)
+    const CAM_ORBIT   = 1.8;  // radians / sec    — camera yaw (WASD A/D)
+    const CAM_ZOOM    = 8;    // units / sec       — camera dist (WASD W/S)
+    const JUMP_HEIGHT = 4.5;  // world units
+    const JUMP_DUR    = 0.68; // seconds
 
-    const left  = this.keys.has('KeyA') || this.keys.has('ArrowLeft');
-    const right = this.keys.has('KeyD') || this.keys.has('ArrowRight');
-    const fwd   = this.keys.has('KeyW') || this.keys.has('ArrowUp');
-    const back  = this.keys.has('KeyS') || this.keys.has('ArrowDown');
+    // ── Camera orbit (WASD) ──────────────────────────────────────────────────
+    if (this.keys.has('KeyA')) this.camYaw   += CAM_ORBIT * dt;
+    if (this.keys.has('KeyD')) this.camYaw   -= CAM_ORBIT * dt;
+    if (this.keys.has('KeyW')) this.camDist   = Math.max(4,  this.camDist - CAM_ZOOM * dt);
+    if (this.keys.has('KeyS')) this.camDist   = Math.min(22, this.camDist + CAM_ZOOM * dt);
 
-    if (left)  this.autonateFacing += TURN_SPEED * dt;
-    if (right) this.autonateFacing -= TURN_SPEED * dt;
+    // ── Character movement (arrow keys) ──────────────────────────────────────
+    const turnL = this.keys.has('ArrowLeft');
+    const turnR = this.keys.has('ArrowRight');
+    const moveFwd  = this.keys.has('ArrowUp');
+    const moveBack = this.keys.has('ArrowDown');
+
+    if (turnL) this.autonateFacing += TURN_SPEED * dt;
+    if (turnR) this.autonateFacing -= TURN_SPEED * dt;
 
     let moving = false;
-    const dx = Math.sin(this.autonateFacing);
-    const dz = Math.cos(this.autonateFacing);
+    const fx = Math.sin(this.autonateFacing);
+    const fz = Math.cos(this.autonateFacing);
     const cur = this.autonate.root.position;
 
-    if (fwd || back) {
-      const dir = fwd ? 1 : -1;
-      const nx  = cur.x + dx * MOVE_SPEED * dt * dir;
-      const nz  = cur.z + dz * MOVE_SPEED * dt * dir;
-      const ny  = terrainHeight(nx, nz);
+    if (moveFwd || moveBack) {
+      const dir = moveFwd ? 1 : -1;
+      const nx  = cur.x + fx * MOVE_SPEED * dt * dir;
+      const nz  = cur.z + fz * MOVE_SPEED * dt * dir;
+      const ny  = terrainHeight(nx, nz) + this.jumpY;
       this.autonate.setPosition(nx, ny, nz);
       moving = true;
     }
-
-    // Always keep facing synced
     this.autonate.setFacing(this.autonateFacing);
 
-    // Swap walk ↔ idle
-    if (moving && !this.autonateIsWalking) {
-      this.autonate.play('Walking_A', true, 0.15);
-      this.autonateIsWalking = true;
-    } else if (!moving && this.autonateIsWalking) {
-      this.autonate.play('Idle', true, 0.2);
-      this.autonateIsWalking = false;
+    // ── Jump arc ─────────────────────────────────────────────────────────────
+    if (this.isJumping) {
+      this.jumpT += dt;
+      this.jumpY  = Math.sin((this.jumpT / JUMP_DUR) * Math.PI) * JUMP_HEIGHT;
+      if (this.jumpT >= JUMP_DUR) {
+        this.isJumping = false;
+        this.jumpY = 0;
+      }
+      // Apply jump height to current position
+      const ny = terrainHeight(cur.x, cur.z) + this.jumpY;
+      this.autonate.setPosition(cur.x, ny, cur.z);
     }
 
-    // Chase camera — lerp position, hard look-at
-    const ap = this.autonate.root.position;
-    const targetCamX = ap.x - dx * CAM_DIST;
-    const targetCamZ = ap.z - dz * CAM_DIST;
-    const targetCamY = ap.y + CAM_HEIGHT;
+    // ── Walk ↔ idle (only when grounded) ─────────────────────────────────────
+    if (!this.isJumping) {
+      if (moving && !this.autonateIsWalking) {
+        this.autonate.play('Walking_A', true, 0.15);
+        this.autonateIsWalking = true;
+      } else if (!moving && this.autonateIsWalking) {
+        this.autonate.play('Idle', true, 0.2);
+        this.autonateIsWalking = false;
+      }
+    }
 
-    this.camera.position.lerp(
-      new THREE.Vector3(targetCamX, targetCamY, targetCamZ),
-      Math.min(1, dt * 6),
+    // ── Chase camera (follows camYaw / camDist / camPitch) ───────────────────
+    const ap = this.autonate.root.position;
+    const hDist = Math.cos(this.camPitch) * this.camDist;
+    const targetCam = new THREE.Vector3(
+      ap.x + Math.sin(this.camYaw) * hDist,
+      ap.y + Math.sin(this.camPitch) * this.camDist + 1.5,
+      ap.z + Math.cos(this.camYaw) * hDist,
     );
+    this.camera.position.lerp(targetCam, Math.min(1, dt * 7));
     this.camera.lookAt(ap.x, ap.y + 1.5, ap.z);
   }
 

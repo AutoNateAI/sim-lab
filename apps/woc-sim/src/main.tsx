@@ -669,9 +669,11 @@ function App(): React.JSX.Element {
             </div>
           </div>
           <div className="human-hud-controls">
-            <span className="human-hud-key">W A S D</span> Move
+            <span className="human-hud-key">↑ ↓ ← →</span> Move / Turn
             <span className="human-hud-divider">·</span>
-            <span className="human-hud-key">A / D</span> Turn
+            <span className="human-hud-key">W A S D</span> Camera
+            <span className="human-hud-divider">·</span>
+            <span className="human-hud-key">Space</span> Jump
           </div>
         </div>
       )}
