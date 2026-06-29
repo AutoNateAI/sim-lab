@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
-import agentCsv from '../../../simulations/workforce-development/city-opportunity-simulator/runs/workforce_001-baseline-seed42/agent_states.csv?raw';
+import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import type {ScheduleActivity} from './scene';
 import './styles.css';
 
@@ -18,6 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
   training: '#ffaa00',
   trained: '#aa55ff',
   employed: '#00ee88',
+  dropout: '#882222',
 };
 
 // ─── TRAJECTORY TYPES ────────────────────────────────────────────────────────
@@ -29,12 +30,16 @@ type WeekSnapshot = {
   stress: number;
   energy: number;
   schedule: ScheduleActivity[];
+  skillLevel?: number;
+  socialCapital?: number;
+  eventThisWeek?: string;
 };
 
 type AgentTrajectory = {
   id: string;
   archetype: string;
   neighborhood: string;
+  skillTrack?: string;
   snapshots: WeekSnapshot[];
   weeksToEmployed: number | null;
   finalStatus: AgentStatus;
@@ -45,11 +50,11 @@ type AgentTrajectory = {
 const ALL_WEEKS = new Map<number, AgentState[]>();
 const AVAILABLE_WEEKS: number[] = [];
 ((): void => {
-  const [, ...rows] = agentCsv.trim().split(/\r?\n/);
+  const lines = agentCsv.trim().split(/\r?\n/);
   const weekSet = new Set<number>();
-  for (const row of rows) {
+  for (const row of lines.slice(1)) {
     const weekStr = row.split(',')[0];
-    if (weekStr) weekSet.add(Number(weekStr));
+    if (weekStr && !isNaN(Number(weekStr))) weekSet.add(Number(weekStr));
   }
   for (const w of [...weekSet].sort((a, b) => a - b)) AVAILABLE_WEEKS.push(w);
 })();
@@ -69,6 +74,7 @@ function buildTrajectories(): AgentTrajectory[] {
         byId.set(agent.id, {
           id: agent.id, archetype: agent.archetype,
           neighborhood: agent.neighborhood,
+          skillTrack: agent.skillTrack,
           snapshots: [], weeksToEmployed: null, finalStatus: 'unaware',
         });
       }
@@ -77,6 +83,9 @@ function buildTrajectories(): AgentTrajectory[] {
         week, status: agent.status,
         moneyPressure: agent.moneyPressure, stress: agent.stress, energy: agent.energy,
         schedule: agent.schedule,
+        skillLevel: agent.skillLevel,
+        socialCapital: agent.socialCapital,
+        eventThisWeek: agent.eventThisWeek,
       });
       if (agent.status === 'employed' && t.weeksToEmployed === null) t.weeksToEmployed = week;
       t.finalStatus = agent.status;
@@ -283,6 +292,7 @@ function AgentStoryPanel({
           <div className="story-archetype">{traj.archetype}</div>
           <div className="story-id">{traj.id}</div>
           <div className="story-neighborhood">{traj.neighborhood}</div>
+          {traj.skillTrack && <div className="story-track">{traj.skillTrack} track</div>}
         </div>
         <div className="story-header-actions">
           <button
@@ -302,10 +312,10 @@ function AgentStoryPanel({
           {traj.snapshots.map((s) => (
             <button
               key={s.week}
-              className={`tl-dot ${s.week === storyWeek ? 'selected' : ''}`}
+              className={`tl-dot ${s.week === storyWeek ? 'selected' : ''} ${s.eventThisWeek ? 'has-event' : ''}`}
               style={{'--dot-color': STATUS_COLORS[s.status]} as React.CSSProperties}
               onClick={() => setStoryWeek(s.week)}
-              title={`Wk ${s.week}: ${s.status}`}
+              title={`Wk ${s.week}: ${s.status}${s.eventThisWeek ? ` · ${s.eventThisWeek.replaceAll('_', ' ')}` : ''}`}
             />
           ))}
         </div>
@@ -329,10 +339,12 @@ function AgentStoryPanel({
       <div className="story-section">
         <div className="story-section-label">State · Week {storyWeek}</div>
         {([
-          {label: 'Money pressure', value: snap.moneyPressure, cls: 'money'},
-          {label: 'Stress', value: snap.stress, cls: 'stress'},
           {label: 'Energy', value: snap.energy, cls: 'energy'},
-        ] as const).map(({label, value, cls}) => (
+          {label: 'Stress', value: snap.stress, cls: 'stress'},
+          {label: 'Money pressure', value: snap.moneyPressure, cls: 'money'},
+          ...(snap.skillLevel !== undefined ? [{label: 'Skill level', value: snap.skillLevel, cls: 'skill'}] : []),
+          ...(snap.socialCapital !== undefined ? [{label: 'Social capital', value: snap.socialCapital, cls: 'social'}] : []),
+        ]).map(({label, value, cls}) => (
           <div key={label} className="story-bar-row">
             <span className="bar-label">{label}</span>
             <div className="bar-track">
@@ -341,6 +353,9 @@ function AgentStoryPanel({
             <span className="bar-val">{((value ?? 0) * 100).toFixed(0)}%</span>
           </div>
         ))}
+        {snap.eventThisWeek && (
+          <div className="story-event-badge">{snap.eventThisWeek.replaceAll('_', ' ')}</div>
+        )}
       </div>
 
       {/* Hourly schedule for selected week */}

@@ -132,7 +132,7 @@ function grToWoc(grX: number, grY: number): {x: number; z: number} {
 
 // ─── AGENT DATA TYPES ─────────────────────────────────────────────────────────
 
-export type AgentStatus = 'unaware' | 'aware' | 'training' | 'trained' | 'employed';
+export type AgentStatus = 'unaware' | 'aware' | 'training' | 'trained' | 'employed' | 'dropout';
 
 export type ScheduleActivity = {
   day: number;
@@ -156,6 +156,11 @@ export type AgentState = {
   moneyPressure: number;
   stress: number;
   energy: number;
+  // Eastbrook Vale experiment fields (optional — absent in legacy CSVs)
+  skillTrack?: string;
+  skillLevel?: number;
+  socialCapital?: number;
+  eventThisWeek?: string;
 };
 
 function splitCsvLine(line: string): string[] {
@@ -174,28 +179,65 @@ function splitCsvLine(line: string): string[] {
   return fields;
 }
 
-export function parseAgents(csv: string, targetWeek: number, maxAgents = 50): AgentState[] {
-  const [, ...rows] = csv.trim().split(/\r?\n/);
+export function parseAgents(csv: string, targetWeek: number, maxAgents = 60): AgentState[] {
+  const lines = csv.trim().split(/\r?\n/);
+  if (!lines[0]) return [];
+
+  // Parse header to build column name → index map (supports both old and new CSV formats)
+  const headerFields = splitCsvLine(lines[0]);
+  const col: Record<string, number> = {};
+  headerFields.forEach((name, idx) => { col[name] = idx; });
+
+  const i = {
+    week:    col['week']    ?? 0,
+    id:      col['agent_id'] ?? 1,
+    status:  col['status'] ?? 2,
+    homeX:   col['home_x'] ?? 17,
+    homeY:   col['home_y'] ?? 18,
+    destX:   col['dest_x'] ?? col['destination_x'] ?? 20,
+    destY:   col['dest_y'] ?? col['destination_y'] ?? 21,
+    arch:    col['archetype'] ?? col['resident_archetype'] ?? 35,
+    neigh:   col['neighborhood'] ?? col['neighborhood_id'] ?? 34,
+    money:   col['money_pressure'] ?? 9,
+    stress:  col['stress'] ?? 52,
+    energy:  col['energy'] ?? 54,
+    sched:   col['schedule_json'] ?? col['daily_schedule'] ?? 57,
+    track:   col['skill_track'] ?? -1,
+    skill:   col['skill_level'] ?? -1,
+    sc:      col['social_capital'] ?? -1,
+    event:   col['event_this_week'] ?? -1,
+  };
+
+  // Normalize a numeric field to 0-1 range. New CSV uses 0-100, old CSV uses 0-1.
+  const norm01 = (v: string | undefined): number => {
+    const n = Number(v ?? 0);
+    return n > 1 ? n / 100 : n;
+  };
+
   const agents = new Map<string, AgentState>();
-  for (const line of rows) {
+  for (const line of lines.slice(1)) {
     if (agents.size >= maxAgents) break;
     const p = splitCsvLine(line);
-    if (Number(p[0]) !== targetWeek) continue;
-    const home = grToWoc(Number(p[17]), Number(p[18]));
-    const dest = grToWoc(Number(p[20]), Number(p[21]));
+    if (Number(p[i.week]) !== targetWeek) continue;
+    const home = grToWoc(Number(p[i.homeX]), Number(p[i.homeY]));
+    const dest = grToWoc(Number(p[i.destX]), Number(p[i.destY]));
     let schedule: ScheduleActivity[] = [];
-    try {schedule = JSON.parse(p[57] ?? '[]') as ScheduleActivity[];} catch {/* */}
-    agents.set(p[1]!, {
-      id: p[1]!,
-      status: p[2] as AgentStatus,
-      archetype: (p[35] ?? 'default').replaceAll('_', ' '),
-      neighborhood: (p[34] ?? '').replaceAll('_', ' '),
+    try {schedule = JSON.parse(p[i.sched] ?? '[]') as ScheduleActivity[];} catch {/* */}
+    agents.set(p[i.id]!, {
+      id: p[i.id]!,
+      status: p[i.status] as AgentStatus,
+      archetype: (p[i.arch] ?? 'default').replaceAll('_', ' '),
+      neighborhood: (p[i.neigh] ?? '').replaceAll('_', ' '),
       home,
       dest,
       schedule,
-      moneyPressure: Number(p[9]),
-      stress: Number(p[52]),
-      energy: Number(p[54]),
+      moneyPressure: norm01(p[i.money]),
+      stress: norm01(p[i.stress]),
+      energy: norm01(p[i.energy]),
+      skillTrack: i.track >= 0 ? (p[i.track] || undefined) : undefined,
+      skillLevel: i.skill >= 0 ? Number(p[i.skill]) / 100 : undefined,   // 0-1
+      socialCapital: i.sc >= 0 ? Number(p[i.sc]) / 100 : undefined,       // 0-1
+      eventThisWeek: i.event >= 0 ? (p[i.event] || undefined) : undefined,
     });
   }
   return [...agents.values()];
@@ -237,11 +279,12 @@ const STATUS_COLORS: Record<AgentStatus, THREE.Color> = {
   training: new THREE.Color(0xffaa00),
   trained:  new THREE.Color(0xaa55ff),
   employed: new THREE.Color(0x00ee88),
+  dropout:  new THREE.Color(0x882222),
 };
 
 const STATUS_LABELS: Record<AgentStatus, string> = {
   unaware: 'Unaware', aware: 'Aware', training: 'Training',
-  trained: 'Trained', employed: 'Employed',
+  trained: 'Trained', employed: 'Employed', dropout: 'Dropout',
 };
 
 // ─── TERRAIN GEOMETRY ─────────────────────────────────────────────────────────
@@ -714,7 +757,7 @@ export class WocScene {
 
   update(timeInWeek: number): void {
     const counts: Record<AgentStatus, number> = {
-      unaware: 0, aware: 0, training: 0, trained: 0, employed: 0,
+      unaware: 0, aware: 0, training: 0, trained: 0, employed: 0, dropout: 0,
     };
 
     this.agents.forEach((agent) => {
