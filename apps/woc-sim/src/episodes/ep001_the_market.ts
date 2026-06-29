@@ -155,16 +155,80 @@ export const EP001_NPCS: EpisodeNpc[] = [
   },
 ];
 
+// ─── BEAT CAMERA SETUPS — scouted via Playwright ──────────────────────────────
+// Each beat has a verified start position for Autonate and one or two camera
+// presets that look good from that spot. "primary" is the main shot, "secondary"
+// is an alternate angle (face shot, reverse angle, etc.).
+//
+// Scouting notes (2026-06-29):
+//   - Conversation scenes: camera from EAST (camYaw≈PI/2) avoids portal rings at x=16,22.
+//   - High pitch (0.40+) clears tree geometry south of market pavilion.
+//   - Hub wide: Autonate at (4,8) facing inn, camera slightly off-axis gives depth.
+//   - Sim agents wander — if one blocks a shot, pause+re-record.
+
+export type CamPreset = {yaw: number; pitch: number; dist: number; desc: string};
+
+export type BeatSetup = {
+  beatId:    string;
+  x: number; z: number;  // Autonate start position for this beat
+  facing:    number;      // Autonate facing direction (radians)
+  primary:   CamPreset;
+  secondary: CamPreset;
+};
+
+export const EP001_SETUPS: BeatSetup[] = [
+  {
+    beatId: 'arrive',
+    x: 4, z: 8, facing: Math.PI,        // Autonate faces south toward hub buildings
+    primary:   {yaw: 0.3,             pitch: 0.38, dist: 10,  desc: 'Wide behind — inn in background'},
+    secondary: {yaw: Math.PI + 0.2,   pitch: 0.14, dist: 6,   desc: 'Face shot — to camera'},
+  },
+  {
+    beatId: 'market_enter',
+    x: 8, z: 0, facing: Math.PI / 2,   // Heading east toward market
+    primary:   {yaw: -Math.PI / 2,    pitch: 0.32, dist: 14,  desc: 'Follow behind — market ahead'},
+    secondary: {yaw: -Math.PI / 4,    pitch: 0.28, dist: 10,  desc: 'Diagonal follow — slightly north'},
+  },
+  {
+    beatId: 'meet_elara',
+    x: 30, z: 2, facing: 0,            // Faces north toward Elara at (30,6)
+    primary:   {yaw: Math.PI / 2,     pitch: 0.40, dist: 12,  desc: 'East side — avoids trees, sees Elara'},
+    secondary: {yaw: 0,               pitch: 0.18, dist: 7,   desc: 'Face shot — Autonate looking at Elara'},
+  },
+  {
+    beatId: 'theo',
+    x: 26, z: -5, facing: 0,           // Faces north toward Theo at (24,-1)
+    primary:   {yaw: Math.PI / 2,     pitch: 0.32, dist: 12,  desc: 'East side — portal ring as scenery'},
+    secondary: {yaw: Math.PI,         pitch: 0.32, dist: 10,  desc: 'Behind Autonate — Theo in frame'},
+  },
+  {
+    beatId: 'min',
+    x: 36, z: -5, facing: 0,           // Faces north toward Min at (36,-1)
+    primary:   {yaw: -Math.PI / 2,    pitch: 0.38, dist: 12,  desc: 'West side — open field, no portals'},
+    secondary: {yaw: Math.PI,         pitch: 0.30, dist: 10,  desc: 'Behind Autonate — Min in frame'},
+  },
+  {
+    beatId: 'revelation',
+    x: 30, z: 2, facing: 0,
+    primary:   {yaw: Math.PI / 2,     pitch: 0.36, dist: 9,   desc: 'East side — tighter, more intimate'},
+    secondary: {yaw: -Math.PI / 6,    pitch: 0.15, dist: 6,   desc: 'Low face shot — revelation moment'},
+  },
+  {
+    beatId: 'pitch',
+    x: 26, z: -5, facing: 0,
+    primary:   {yaw: Math.PI / 2 + 0.4, pitch: 0.20, dist: 7, desc: 'Close diagonal — intense pitch angle'},
+    secondary: {yaw: Math.PI,           pitch: 0.14, dist: 5,  desc: 'Very close OTS — Theo reaction visible'},
+  },
+];
+
 // ─── EPISODE BEATS (director reference — not the same as SceneAct[]) ──────────
-// This is the human-readable outline shown in the director HUD.
-// Each beat maps to a section of the performance.
 
 export type EpisodeBeat = {
   id: string;
   label: string;
   description: string;
-  npcId?: string;   // NPC to interact with for this beat
-  location: string; // where to be
+  npcId?: string;
+  location: string;
 };
 
 export const EP001_BEATS: EpisodeBeat[] = [

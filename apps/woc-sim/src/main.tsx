@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
 import type {ScheduleActivity} from './scene';
 import type {EpisodeNpc, DialogueLine} from './npcs';
-import {EP001_NPCS, EP001_BEATS, EP001_SCENE} from './episodes/ep001_the_market';
+import {EP001_NPCS, EP001_BEATS, EP001_SCENE, EP001_SETUPS, type BeatSetup} from './episodes/ep001_the_market';
 import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import './styles.css';
 
@@ -530,9 +530,11 @@ function App(): React.JSX.Element {
     if (!canvas) return;
     const scene = new WocScene(canvas);
     sceneRef.current = scene;
+    // Expose globally for Playwright inspection / debug console
+    (window as unknown as Record<string, unknown>).__wocScene = scene;
     void scene.setAgents(getWeekAgents(selectedWeekRef.current), setStats);
     void scene.setEpisodeNpcs(EP001_NPCS, setNearestNpc, setDialogueLine, setPortalPrompt);
-    return () => { scene.dispose(); sceneRef.current = null; };
+    return () => { scene.dispose(); sceneRef.current = null; delete (window as unknown as Record<string, unknown>).__wocScene; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reload agents when week changes
@@ -758,6 +760,10 @@ function App(): React.JSX.Element {
   const handleClearOverrides = useCallback(() => {
     sceneRef.current?.clearOverrides();
     setCamOverrides([]);
+  }, []);
+
+  const handleJumpToSetup = useCallback((setup: BeatSetup) => {
+    sceneRef.current?.jumpToSetup(setup);
   }, []);
 
   const handleToggleView = useCallback(() => {
@@ -1005,6 +1011,7 @@ function App(): React.JSX.Element {
               <div className="director-title">EP001 · The Invisible Architecture</div>
               {EP001_BEATS.map((beat) => {
                 const done = beatsDone.has(beat.id);
+                const setup = EP001_SETUPS.find(s => s.beatId === beat.id);
                 return (
                   <div key={beat.id} className={`director-beat ${done ? 'done' : ''}`}>
                     <button className="beat-check" onClick={() => setBeatsDone(prev => {
@@ -1018,6 +1025,18 @@ function App(): React.JSX.Element {
                       <div className="beat-label">{beat.label}</div>
                       <div className="beat-desc">{beat.description}</div>
                       <div className="beat-loc">📍 {beat.location}</div>
+                      {setup && (
+                        <div className="beat-actions">
+                          <button
+                            className="beat-jump-btn"
+                            onClick={() => handleJumpToSetup(setup)}
+                            title={`Teleport to ${beat.label} · ${setup.primary.desc}`}
+                          >
+                            ↑ Jump
+                          </button>
+                          <span className="beat-cam-hint">{setup.primary.desc}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

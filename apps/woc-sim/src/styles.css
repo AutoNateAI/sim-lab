@@ -720,3 +720,12 @@ body { background: #040810; }
 .beat-label { font: 700 0.72rem/1 'DM Mono', monospace; color: #ffb800; margin-bottom: 3px; }
 .beat-desc  { font: 400 0.65rem/1.4 'Space Grotesk', sans-serif; color: rgba(255,255,255,0.55); }
 .beat-loc   { font: 500 0.58rem/1 'DM Mono', monospace; color: rgba(0,255,204,0.5); margin-top: 4px; }
+.beat-actions { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+.beat-jump-btn {
+  padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,212,255,0.4);
+  background: rgba(0,212,255,0.08); color: #00d4ff;
+  font: 600 0.62rem/1 'DM Mono', monospace; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.beat-jump-btn:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.beat-cam-hint { font: 400 0.58rem/1 'DM Mono', monospace; color: rgba(255,255,255,0.3); }

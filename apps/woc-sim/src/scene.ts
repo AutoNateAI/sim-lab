@@ -1672,4 +1672,44 @@ export class WocScene {
       getCamYaw:   ()  => this.camYaw,
     };
   }
+
+  // ─── DEBUG / PLAYWRIGHT API ───────────────────────────────────────────────────
+  // Exposed via window.__wocScene for visual inspection + scripted scouting.
+
+  /** Jump to a BeatSetup — teleports Autonate and sets camera. Production shortcut. */
+  jumpToSetup(setup: {x: number; z: number; facing: number; primary: {yaw: number; pitch: number; dist: number}}): void {
+    this.debugTeleport(setup.x, setup.z, setup.facing);
+    this.debugSetCam(setup.primary.yaw, setup.primary.pitch, setup.primary.dist);
+  }
+
+  /** Jump Autonate to world position and face a direction. Switches to human view. */
+  debugTeleport(x: number, z: number, facingRad = 0): void {
+    if (this.viewMode !== 'human') this.setViewMode('human');
+    const y = terrainHeight(x, z);
+    this.autonate?.setPosition(x, y, z);
+    this.autonate?.setFacing(facingRad);
+    this.autonateFacing = facingRad;
+    this.smoothedCharY  = y;
+    this.snapHumanCamera();
+  }
+
+  /** Set camera angles directly (for scouting). */
+  debugSetCam(yaw: number, pitch: number, dist: number): void {
+    this.camYaw   = yaw;
+    this.camPitch = pitch;
+    this.camDist  = dist;
+  }
+
+  /** Read current camera state — use after adjusting to extract values for code. */
+  debugGetCam(): {yaw: number; pitch: number; dist: number; x: number; z: number; facing: number} {
+    const p = this.autonate?.root.position;
+    return {
+      yaw:    this.camYaw,
+      pitch:  this.camPitch,
+      dist:   this.camDist,
+      x:      p?.x ?? 0,
+      z:      p?.z ?? 0,
+      facing: this.autonateFacing,
+    };
+  }
 }
