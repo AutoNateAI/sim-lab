@@ -24,6 +24,9 @@ Codex is the research teammate across that loop. It can help scaffold a simulati
 ## What the cockpit supports now
 
 - Replay a 16-week Mesa run without replacing the model engine.
+- Advance through a 24-hour clock with hourly positions, daily schedules, and changing ambient light.
+- Place seeded homes on a shared street grid and route residents to support, education, and business destinations.
+- Constrain travel to roads with varied walking, biking, and driving speeds plus deterministic lane separation.
 - Pan and zoom from a whole-system view into local behavior.
 - Follow one agent or Shift-click a group and keep them framed as they move.
 - Pause, scrub the timeline, inspect vital metrics, and compare reproducible scenarios.

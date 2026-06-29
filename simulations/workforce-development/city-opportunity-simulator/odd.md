@@ -20,8 +20,11 @@ The model contains 240 resident agents. Each resident has:
 - a pipeline state: `unaware`, `aware`, `training`, `trained`, or `employed`;
 - a fixed job-skill fit from 0.55 to 1.0;
 - an optional training-start week.
+- a seeded home attached to the street grid;
+- a daily start hour, end hour, mobility mode, finite speed, destination, and orthogonal road route.
+- a priority score, weekly time budget, commute duration, active-day count, action-time requirement, and time-access score.
 
-The program environment has a remaining budget, concurrent training-seat limit, and remaining job openings. One time step represents one week. A run lasts 16 weeks.
+The program environment has a remaining budget, concurrent training-seat limit, remaining job openings, residential streets, two education destinations, a support organization, and a business district. Pipeline decisions occur weekly. The checked-in clock records hourly positions across seven-day weeks, while the browser resolves movement in 15-minute steps between those observations.
 
 ### Process overview and scheduling
 
@@ -38,6 +41,8 @@ flowchart LR
 
 The order matters. A resident reached this week may enroll this week, but training takes three weeks before completion and employment matching.
 
+Within each week, every resident receives a seven-day itinerary containing sleep, preparation, work or school, workforce programming, food access, and optional community activity. Each off-site activity stores its own destination, route, and commute time. Residents follow those routes, stop at traffic signals, queue behind slower traffic, flash red when leaving a building, flash green when entering, and remain hidden while indoors.
+
 ## 2. Design concepts
 
 ### Basic principles
@@ -50,7 +55,7 @@ Employment totals emerge from individual transitions and shared constraints. The
 
 ### Adaptation and objectives
 
-Residents do not optimize across programs in version 1. They respond probabilistically when aware, enroll when capacity and funding exist, and accept a match when skill fit produces a successful draw.
+Residents do not optimize across multiple programs. They prioritize the current pipeline action using motivation, confidence, money pressure, family pressure, transportation pressure, and available contacts. Distance and mobility speed consume the weekly time budget, so closer residents can devote more time to the same action.
 
 ### Interaction
 
@@ -62,7 +67,7 @@ Awareness, enrollment, completion, job matching, and initialization use independ
 
 ### Observation
 
-The interface reports residents reached, training completions, employment, remaining budget, and weekly state trajectories.
+The interface reports residents reached, training completions, employment, remaining budget, weekly state trajectories, and a 15-minute city clock. The replay exposes 15 named neighborhood zones, 32 institutions, homes, scheduled destinations, road-constrained movement, mobility modes, signal delays, queues, human needs, peer interactions, and restrained day/night lighting.
 
 ## 3. Details
 
@@ -72,18 +77,21 @@ Five percent of residents begin aware of the program. All others begin unaware. 
 
 ### Input data
 
-Version 1 uses synthetic inputs and is executed with Mesa 3.5.1. No claim is made that the defaults describe a specific city. A calibrated version should source program cost, funnel conversion, completion, placement, and retention data.
+Version 3 is anchored to official Grand Rapids, Kent ISD, Census, BLS, education, workforce-provider, and employer-directory sources and is executed with Mesa 3.5.1. Institution presence, broad geography, occupation families, and demographic margins are source-backed; resident-level records, exact coordinates, capacities, schedules, behavioral coefficients, and outcomes remain synthetic modeling assumptions rather than parcel-accurate or person-level claims.
 
 ### Submodels
 
-1. **Outreach:** spend a fixed weekly base plus a variable amount; unaware residents receive a seeded awareness draw.
-2. **Completion:** residents finish after three weeks with a 92% completion probability; others return to aware status.
-3. **Enrollment:** aware residents have a 24% weekly application/enrollment probability while seats and $3,500 per-resident funding remain.
-4. **Matching:** trained residents have a weekly probability of `0.28 × skillFit` while openings remain.
+1. **Time access:** combine priority with available weekly hours divided by action and commute hours; clamp the multiplier from 0.20 to 1.15.
+2. **Outreach:** spend a fixed weekly base plus a variable amount; unaware residents receive a seeded awareness draw multiplied by time access.
+3. **Completion:** residents finish after three weeks with `0.92 × timeAccess`; others return to aware status.
+4. **Enrollment:** aware residents receive `0.24 × timeAccess` while seats and $3,500 per-resident funding remain.
+5. **Matching:** trained residents receive `0.28 × skillFit × timeAccess` while openings remain.
 
 ## Known limitations
 
-- Residents have no geography, demographics, transportation constraints, caregiving load, or income.
+- The city is a synthetic orthogonal street grid rather than calibrated GIS/GTFS geography.
+- Signals, queues, and following gaps are deterministic visual traffic rules; they are not calibrated intersection-capacity or crash models.
+- Demographics, income, and caregiving pressures are state variables but are not yet calibrated to local distributions.
 - Jobs are homogeneous except for resident skill fit.
 - The model stops at placement and does not model wages or retention.
 - Outreach channels and trust are compressed into one rate.

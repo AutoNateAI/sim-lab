@@ -1,0 +1,1573 @@
+{
+  "schema_version": "1.0",
+  "city": "Grand Rapids",
+  "state": "Michigan",
+  "model_basis": "schematic_source_anchored",
+  "coordinate_note": "Map coordinates preserve broad Grand Rapids relationships but are not parcel-accurate GIS coordinates.",
+  "width": 24000,
+  "height": 16000,
+  "focus": [
+    12000,
+    8000
+  ],
+  "road_width": 72,
+  "roads": [
+    {
+      "id": "h-800",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          800
+        ],
+        [
+          22800,
+          800
+        ]
+      ]
+    },
+    {
+      "id": "h-2400",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          2400
+        ],
+        [
+          22800,
+          2400
+        ]
+      ]
+    },
+    {
+      "id": "h-4000",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          4000
+        ],
+        [
+          22800,
+          4000
+        ]
+      ]
+    },
+    {
+      "id": "h-5600",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          5600
+        ],
+        [
+          22800,
+          5600
+        ]
+      ]
+    },
+    {
+      "id": "h-7200",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          7200
+        ],
+        [
+          22800,
+          7200
+        ]
+      ]
+    },
+    {
+      "id": "h-8800",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          8800
+        ],
+        [
+          22800,
+          8800
+        ]
+      ]
+    },
+    {
+      "id": "h-10400",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          10400
+        ],
+        [
+          22800,
+          10400
+        ]
+      ]
+    },
+    {
+      "id": "h-12000",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          12000
+        ],
+        [
+          22800,
+          12000
+        ]
+      ]
+    },
+    {
+      "id": "h-13600",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          13600
+        ],
+        [
+          22800,
+          13600
+        ]
+      ]
+    },
+    {
+      "id": "h-15200",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          15200
+        ],
+        [
+          22800,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-1200",
+      "kind": "street",
+      "points": [
+        [
+          1200,
+          800
+        ],
+        [
+          1200,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-3000",
+      "kind": "street",
+      "points": [
+        [
+          3000,
+          800
+        ],
+        [
+          3000,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-4800",
+      "kind": "street",
+      "points": [
+        [
+          4800,
+          800
+        ],
+        [
+          4800,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-6600",
+      "kind": "street",
+      "points": [
+        [
+          6600,
+          800
+        ],
+        [
+          6600,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-8400",
+      "kind": "street",
+      "points": [
+        [
+          8400,
+          800
+        ],
+        [
+          8400,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-10200",
+      "kind": "street",
+      "points": [
+        [
+          10200,
+          800
+        ],
+        [
+          10200,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-12000",
+      "kind": "street",
+      "points": [
+        [
+          12000,
+          800
+        ],
+        [
+          12000,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-13800",
+      "kind": "street",
+      "points": [
+        [
+          13800,
+          800
+        ],
+        [
+          13800,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-15600",
+      "kind": "street",
+      "points": [
+        [
+          15600,
+          800
+        ],
+        [
+          15600,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-17400",
+      "kind": "street",
+      "points": [
+        [
+          17400,
+          800
+        ],
+        [
+          17400,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-19200",
+      "kind": "street",
+      "points": [
+        [
+          19200,
+          800
+        ],
+        [
+          19200,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-21000",
+      "kind": "street",
+      "points": [
+        [
+          21000,
+          800
+        ],
+        [
+          21000,
+          15200
+        ]
+      ]
+    },
+    {
+      "id": "v-22800",
+      "kind": "street",
+      "points": [
+        [
+          22800,
+          800
+        ],
+        [
+          22800,
+          15200
+        ]
+      ]
+    }
+  ],
+  "districts": [
+    {
+      "id": "west_grand",
+      "name": "West Grand",
+      "bounds": [
+        600,
+        2400,
+        6000,
+        3200
+      ],
+      "type": "mixed_income_legacy",
+      "housing_cost_index": 0.78,
+      "transit_access": 0.68,
+      "food_access": 0.62,
+      "job_access": 0.72,
+      "color": "#376f5b"
+    },
+    {
+      "id": "creston",
+      "name": "Creston",
+      "bounds": [
+        6600,
+        800,
+        7200,
+        3200
+      ],
+      "type": "mixed_use_corridor",
+      "housing_cost_index": 0.88,
+      "transit_access": 0.72,
+      "food_access": 0.75,
+      "job_access": 0.69,
+      "color": "#477f68"
+    },
+    {
+      "id": "belknap",
+      "name": "Belknap Lookout",
+      "bounds": [
+        8400,
+        4000,
+        3600,
+        1600
+      ],
+      "type": "changing_infill",
+      "housing_cost_index": 1.08,
+      "transit_access": 0.78,
+      "food_access": 0.66,
+      "job_access": 0.9,
+      "color": "#537f72"
+    },
+    {
+      "id": "john_ball",
+      "name": "John Ball Park",
+      "bounds": [
+        600,
+        5600,
+        7800,
+        3200
+      ],
+      "type": "working_family",
+      "housing_cost_index": 0.87,
+      "transit_access": 0.64,
+      "food_access": 0.71,
+      "job_access": 0.67,
+      "color": "#3f755f"
+    },
+    {
+      "id": "downtown",
+      "name": "Downtown",
+      "bounds": [
+        8400,
+        5600,
+        5400,
+        3200
+      ],
+      "type": "high_access_mixed_use",
+      "housing_cost_index": 1.3,
+      "transit_access": 0.96,
+      "food_access": 0.86,
+      "job_access": 1.0,
+      "color": "#5f827c"
+    },
+    {
+      "id": "heritage_hill",
+      "name": "Heritage Hill",
+      "bounds": [
+        13800,
+        5600,
+        3600,
+        3200
+      ],
+      "type": "historic_high_cost",
+      "housing_cost_index": 1.34,
+      "transit_access": 0.84,
+      "food_access": 0.82,
+      "job_access": 0.9,
+      "color": "#6f876f"
+    },
+    {
+      "id": "eastown",
+      "name": "Eastown and East Hills",
+      "bounds": [
+        17400,
+        5600,
+        6000,
+        3200
+      ],
+      "type": "amenity_rich_mixed_use",
+      "housing_cost_index": 1.18,
+      "transit_access": 0.8,
+      "food_access": 0.92,
+      "job_access": 0.76,
+      "color": "#688a64"
+    },
+    {
+      "id": "roosevelt_park",
+      "name": "Roosevelt Park",
+      "bounds": [
+        600,
+        8800,
+        7800,
+        4000
+      ],
+      "type": "working_class_multilingual",
+      "housing_cost_index": 0.7,
+      "transit_access": 0.7,
+      "food_access": 0.58,
+      "job_access": 0.66,
+      "color": "#326b58"
+    },
+    {
+      "id": "black_hills",
+      "name": "Black Hills and Grandville",
+      "bounds": [
+        600,
+        12800,
+        7800,
+        2800
+      ],
+      "type": "industrial_residential",
+      "housing_cost_index": 0.68,
+      "transit_access": 0.55,
+      "food_access": 0.51,
+      "job_access": 0.74,
+      "color": "#2d6251"
+    },
+    {
+      "id": "heartside",
+      "name": "Heartside and South Downtown",
+      "bounds": [
+        8400,
+        8800,
+        5400,
+        2400
+      ],
+      "type": "high_service_need",
+      "housing_cost_index": 0.82,
+      "transit_access": 0.93,
+      "food_access": 0.73,
+      "job_access": 0.91,
+      "color": "#426f67"
+    },
+    {
+      "id": "baxter",
+      "name": "Baxter and Southeast Community",
+      "bounds": [
+        13800,
+        8800,
+        5400,
+        3200
+      ],
+      "type": "neighborhood_of_focus",
+      "housing_cost_index": 0.72,
+      "transit_access": 0.76,
+      "food_access": 0.61,
+      "job_access": 0.68,
+      "color": "#39725f"
+    },
+    {
+      "id": "ottawa_hills",
+      "name": "Ottawa Hills",
+      "bounds": [
+        19200,
+        8800,
+        4200,
+        3200
+      ],
+      "type": "stable_residential",
+      "housing_cost_index": 1.02,
+      "transit_access": 0.64,
+      "food_access": 0.76,
+      "job_access": 0.62,
+      "color": "#557d65"
+    },
+    {
+      "id": "garfield_park",
+      "name": "Garfield Park",
+      "bounds": [
+        8400,
+        11200,
+        5400,
+        4400
+      ],
+      "type": "working_family",
+      "housing_cost_index": 0.76,
+      "transit_access": 0.7,
+      "food_access": 0.63,
+      "job_access": 0.65,
+      "color": "#356d59"
+    },
+    {
+      "id": "alger_heights",
+      "name": "Alger Heights",
+      "bounds": [
+        13800,
+        12000,
+        5400,
+        3600
+      ],
+      "type": "neighborhood_center",
+      "housing_cost_index": 0.92,
+      "transit_access": 0.63,
+      "food_access": 0.84,
+      "job_access": 0.61,
+      "color": "#4e7b62"
+    },
+    {
+      "id": "ridgemoor",
+      "name": "Ridgemoor and Eastgate",
+      "bounds": [
+        19200,
+        12000,
+        4200,
+        3600
+      ],
+      "type": "higher_cost_residential",
+      "housing_cost_index": 1.2,
+      "transit_access": 0.48,
+      "food_access": 0.79,
+      "job_access": 0.64,
+      "color": "#64866c"
+    }
+  ],
+  "institutions": [
+    {
+      "id": "west_michigan_works",
+      "name": "West Michigan Works",
+      "kind": "workforce_program",
+      "layer": 2,
+      "x": 10200,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "west_michigan_works",
+      "capacity": 150,
+      "texture": "hub",
+      "tint": "#ef476f"
+    },
+    {
+      "id": "urban_league_workforce",
+      "name": "Urban League Workforce Center",
+      "kind": "workforce_program",
+      "layer": 2,
+      "x": 13800,
+      "y": 10400,
+      "neighborhood": "baxter",
+      "source": "urban_league",
+      "capacity": 110,
+      "texture": "hub",
+      "tint": "#f25f5c"
+    },
+    {
+      "id": "goodwill_achieve",
+      "name": "Goodwill Achieve",
+      "kind": "workforce_program",
+      "layer": 2,
+      "x": 21000,
+      "y": 12000,
+      "neighborhood": "ridgemoor",
+      "source": "goodwill_achieve",
+      "capacity": 90,
+      "texture": "hub",
+      "tint": "#ff7f51"
+    },
+    {
+      "id": "mel_trotter_next_step",
+      "name": "Mel Trotter Next Step",
+      "kind": "workforce_program",
+      "layer": 2,
+      "x": 12000,
+      "y": 8800,
+      "neighborhood": "heartside",
+      "source": "mel_trotter",
+      "capacity": 120,
+      "texture": "faith",
+      "tint": "#f4a261"
+    },
+    {
+      "id": "other_way_ministries",
+      "name": "The Other Way Ministries",
+      "kind": "community_access",
+      "layer": 5,
+      "x": 4800,
+      "y": 5600,
+      "neighborhood": "west_grand",
+      "source": "other_way",
+      "capacity": 70,
+      "texture": "faith",
+      "tint": "#e9c46a"
+    },
+    {
+      "id": "servants_center",
+      "name": "Servants Center",
+      "kind": "community_access",
+      "layer": 5,
+      "x": 10200,
+      "y": 8800,
+      "neighborhood": "heartside",
+      "source": "city_neighborhood_guide",
+      "capacity": 55,
+      "texture": "faith",
+      "tint": "#e9c46a"
+    },
+    {
+      "id": "grcc",
+      "name": "Grand Rapids Community College",
+      "kind": "training_engine",
+      "layer": 3,
+      "x": 12000,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "grcc_programs",
+      "capacity": 360,
+      "texture": "university",
+      "tint": "#3a86ff"
+    },
+    {
+      "id": "kent_career_tech",
+      "name": "Kent Career Tech Center",
+      "kind": "training_engine",
+      "layer": 3,
+      "x": 22800,
+      "y": 2400,
+      "neighborhood": "ridgemoor",
+      "source": "kent_isd",
+      "capacity": 260,
+      "texture": "university",
+      "tint": "#457b9d"
+    },
+    {
+      "id": "gvsu_pew",
+      "name": "GVSU Pew Campus",
+      "kind": "university",
+      "layer": 3,
+      "x": 8400,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "gvsu_pew",
+      "capacity": 420,
+      "texture": "university",
+      "tint": "#0065a4"
+    },
+    {
+      "id": "aquinas_college",
+      "name": "Aquinas College",
+      "kind": "university",
+      "layer": 3,
+      "x": 17400,
+      "y": 7200,
+      "neighborhood": "eastown",
+      "source": "aquinas",
+      "capacity": 240,
+      "texture": "university",
+      "tint": "#2a9d8f"
+    },
+    {
+      "id": "calvin_university",
+      "name": "Calvin University",
+      "kind": "university",
+      "layer": 3,
+      "x": 21000,
+      "y": 10400,
+      "neighborhood": "ottawa_hills",
+      "source": "calvin",
+      "capacity": 340,
+      "texture": "university",
+      "tint": "#8a1538"
+    },
+    {
+      "id": "cornerstone_university",
+      "name": "Cornerstone University",
+      "kind": "university",
+      "layer": 3,
+      "x": 21000,
+      "y": 4000,
+      "neighborhood": "eastown",
+      "source": "cornerstone",
+      "capacity": 220,
+      "texture": "university",
+      "tint": "#1d3557"
+    },
+    {
+      "id": "ferris_kcad",
+      "name": "Ferris KCAD",
+      "kind": "university",
+      "layer": 3,
+      "x": 12000,
+      "y": 5600,
+      "neighborhood": "downtown",
+      "source": "ferris_kcad",
+      "capacity": 180,
+      "texture": "university",
+      "tint": "#e63946"
+    },
+    {
+      "id": "grps_union",
+      "name": "Union High School",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 3000,
+      "y": 4000,
+      "neighborhood": "west_grand",
+      "source": "grps_schools",
+      "capacity": 130,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "grps_innovation",
+      "name": "Innovation Central High School",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 12000,
+      "y": 4000,
+      "neighborhood": "creston",
+      "source": "grps_schools",
+      "capacity": 120,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "grps_public_museum",
+      "name": "Public Museum High School",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 10200,
+      "y": 5600,
+      "neighborhood": "downtown",
+      "source": "grps_schools",
+      "capacity": 90,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "grps_southwest",
+      "name": "Southwest Middle High School",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 4800,
+      "y": 10400,
+      "neighborhood": "roosevelt_park",
+      "source": "grps_schools",
+      "capacity": 120,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "grps_ottawa_hills",
+      "name": "Ottawa Hills High School",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 17400,
+      "y": 10400,
+      "neighborhood": "ottawa_hills",
+      "source": "grps_schools",
+      "capacity": 130,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "grps_ca_frost",
+      "name": "CA Frost Environmental Science",
+      "kind": "high_school",
+      "layer": 3,
+      "x": 6600,
+      "y": 2400,
+      "neighborhood": "west_grand",
+      "source": "grps_schools",
+      "capacity": 90,
+      "texture": "school",
+      "tint": "#ffca3a"
+    },
+    {
+      "id": "corewell_health",
+      "name": "Corewell Health Medical Center",
+      "kind": "employer",
+      "layer": 4,
+      "x": 13800,
+      "y": 5600,
+      "neighborhood": "belknap",
+      "source": "chamber",
+      "job_family": "healthcare",
+      "job_tier": "high",
+      "capacity": 520,
+      "texture": "hospital",
+      "tint": "#8ecae6"
+    },
+    {
+      "id": "meijer_market",
+      "name": "Meijer Retail and Distribution",
+      "kind": "employer",
+      "layer": 4,
+      "x": 6600,
+      "y": 12000,
+      "neighborhood": "black_hills",
+      "source": "chamber",
+      "job_family": "retail_logistics",
+      "job_tier": "entry",
+      "capacity": 420,
+      "texture": "market",
+      "tint": "#e63946"
+    },
+    {
+      "id": "steelcase_manufacturing",
+      "name": "Steelcase Manufacturing",
+      "kind": "employer",
+      "layer": 4,
+      "x": 8400,
+      "y": 13600,
+      "neighborhood": "garfield_park",
+      "source": "chamber",
+      "job_family": "advanced_manufacturing",
+      "job_tier": "middle",
+      "capacity": 480,
+      "texture": "factory",
+      "tint": "#6c757d"
+    },
+    {
+      "id": "amway_logistics",
+      "name": "Amway Logistics",
+      "kind": "employer",
+      "layer": 4,
+      "x": 22800,
+      "y": 13600,
+      "neighborhood": "ridgemoor",
+      "source": "chamber",
+      "job_family": "logistics",
+      "job_tier": "middle",
+      "capacity": 360,
+      "texture": "factory",
+      "tint": "#457b9d"
+    },
+    {
+      "id": "acrisure_professional",
+      "name": "Acrisure Professional Services",
+      "kind": "employer",
+      "layer": 4,
+      "x": 13800,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "chamber",
+      "job_family": "business_finance",
+      "job_tier": "high",
+      "capacity": 260,
+      "texture": "tower",
+      "tint": "#8338ec"
+    },
+    {
+      "id": "chamber_small_business",
+      "name": "Chamber Small Business Network",
+      "kind": "employer_network",
+      "layer": 4,
+      "x": 12000,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "chamber",
+      "job_family": "mixed",
+      "job_tier": "mixed",
+      "capacity": 300,
+      "texture": "tower",
+      "tint": "#9b5de5"
+    },
+    {
+      "id": "eastown_hospitality",
+      "name": "Eastown Hospitality Corridor",
+      "kind": "employer",
+      "layer": 4,
+      "x": 19200,
+      "y": 7200,
+      "neighborhood": "eastown",
+      "source": "census_jobs",
+      "job_family": "hospitality",
+      "job_tier": "entry",
+      "capacity": 240,
+      "texture": "market",
+      "tint": "#f9844a"
+    },
+    {
+      "id": "westside_construction",
+      "name": "Westside Construction Cluster",
+      "kind": "employer",
+      "layer": 4,
+      "x": 4800,
+      "y": 7200,
+      "neighborhood": "john_ball",
+      "source": "census_jobs",
+      "job_family": "construction",
+      "job_tier": "middle",
+      "capacity": 220,
+      "texture": "factory",
+      "tint": "#bc6c25"
+    },
+    {
+      "id": "downtown_library",
+      "name": "Grand Rapids Public Library",
+      "kind": "public_access",
+      "layer": 5,
+      "x": 12000,
+      "y": 7200,
+      "neighborhood": "downtown",
+      "source": "city_neighborhood_guide",
+      "capacity": 120,
+      "texture": "library",
+      "tint": "#90be6d"
+    },
+    {
+      "id": "roosevelt_food",
+      "name": "Roosevelt Park Food Market",
+      "kind": "food",
+      "layer": 5,
+      "x": 4800,
+      "y": 12000,
+      "neighborhood": "roosevelt_park",
+      "source": "city_master_plan",
+      "capacity": 180,
+      "texture": "market",
+      "tint": "#43aa8b"
+    },
+    {
+      "id": "downtown_food",
+      "name": "Downtown Food Market",
+      "kind": "food",
+      "layer": 5,
+      "x": 10200,
+      "y": 8800,
+      "neighborhood": "heartside",
+      "source": "city_master_plan",
+      "capacity": 200,
+      "texture": "market",
+      "tint": "#43aa8b"
+    },
+    {
+      "id": "eastown_food",
+      "name": "Eastown Food Market",
+      "kind": "food",
+      "layer": 5,
+      "x": 19200,
+      "y": 8800,
+      "neighborhood": "eastown",
+      "source": "city_master_plan",
+      "capacity": 180,
+      "texture": "market",
+      "tint": "#43aa8b"
+    },
+    {
+      "id": "westside_food",
+      "name": "Westside Food Market",
+      "kind": "food",
+      "layer": 5,
+      "x": 3000,
+      "y": 7200,
+      "neighborhood": "john_ball",
+      "source": "city_master_plan",
+      "capacity": 160,
+      "texture": "market",
+      "tint": "#43aa8b"
+    }
+  ],
+  "destinations": [
+    {
+      "id": "west_michigan_works",
+      "x": 10200,
+      "y": 7200
+    },
+    {
+      "id": "urban_league_workforce",
+      "x": 13800,
+      "y": 10400
+    },
+    {
+      "id": "goodwill_achieve",
+      "x": 21000,
+      "y": 12000
+    },
+    {
+      "id": "mel_trotter_next_step",
+      "x": 12000,
+      "y": 8800
+    },
+    {
+      "id": "other_way_ministries",
+      "x": 4800,
+      "y": 5600
+    },
+    {
+      "id": "servants_center",
+      "x": 10200,
+      "y": 8800
+    },
+    {
+      "id": "grcc",
+      "x": 12000,
+      "y": 7200
+    },
+    {
+      "id": "kent_career_tech",
+      "x": 22800,
+      "y": 2400
+    },
+    {
+      "id": "gvsu_pew",
+      "x": 8400,
+      "y": 7200
+    },
+    {
+      "id": "aquinas_college",
+      "x": 17400,
+      "y": 7200
+    },
+    {
+      "id": "calvin_university",
+      "x": 21000,
+      "y": 10400
+    },
+    {
+      "id": "cornerstone_university",
+      "x": 21000,
+      "y": 4000
+    },
+    {
+      "id": "ferris_kcad",
+      "x": 12000,
+      "y": 5600
+    },
+    {
+      "id": "grps_union",
+      "x": 3000,
+      "y": 4000
+    },
+    {
+      "id": "grps_innovation",
+      "x": 12000,
+      "y": 4000
+    },
+    {
+      "id": "grps_public_museum",
+      "x": 10200,
+      "y": 5600
+    },
+    {
+      "id": "grps_southwest",
+      "x": 4800,
+      "y": 10400
+    },
+    {
+      "id": "grps_ottawa_hills",
+      "x": 17400,
+      "y": 10400
+    },
+    {
+      "id": "grps_ca_frost",
+      "x": 6600,
+      "y": 2400
+    },
+    {
+      "id": "corewell_health",
+      "x": 13800,
+      "y": 5600
+    },
+    {
+      "id": "meijer_market",
+      "x": 6600,
+      "y": 12000
+    },
+    {
+      "id": "steelcase_manufacturing",
+      "x": 8400,
+      "y": 13600
+    },
+    {
+      "id": "amway_logistics",
+      "x": 22800,
+      "y": 13600
+    },
+    {
+      "id": "acrisure_professional",
+      "x": 13800,
+      "y": 7200
+    },
+    {
+      "id": "chamber_small_business",
+      "x": 12000,
+      "y": 7200
+    },
+    {
+      "id": "eastown_hospitality",
+      "x": 19200,
+      "y": 7200
+    },
+    {
+      "id": "westside_construction",
+      "x": 4800,
+      "y": 7200
+    },
+    {
+      "id": "downtown_library",
+      "x": 12000,
+      "y": 7200
+    },
+    {
+      "id": "roosevelt_food",
+      "x": 4800,
+      "y": 12000
+    },
+    {
+      "id": "downtown_food",
+      "x": 10200,
+      "y": 8800
+    },
+    {
+      "id": "eastown_food",
+      "x": 19200,
+      "y": 8800
+    },
+    {
+      "id": "westside_food",
+      "x": 3000,
+      "y": 7200
+    }
+  ],
+  "school_districts": [
+    "Byron Center Public Schools",
+    "Caledonia Community Schools",
+    "Cedar Springs Public Schools",
+    "Comstock Park Public Schools",
+    "East Grand Rapids Public Schools",
+    "Forest Hills Public Schools",
+    "Godfrey-Lee Public Schools",
+    "Godwin Heights Public Schools",
+    "Grand Rapids Public Schools",
+    "Grandville Public Schools",
+    "Kelloggsville Public Schools",
+    "Kenowa Hills Public Schools",
+    "Kent City Community Schools",
+    "Kentwood Public Schools",
+    "Lowell Area Schools",
+    "Northview Public Schools",
+    "Rockford Public Schools",
+    "Sparta Area Schools",
+    "Thornapple Kellogg Schools",
+    "Wyoming Public Schools"
+  ],
+  "job_archetypes": [
+    {
+      "id": "food_service",
+      "label": "Food service",
+      "tier": "entry",
+      "hourly_wage": 15.5,
+      "education": "none",
+      "schedule_variability": 0.8,
+      "source": "census_jobs"
+    },
+    {
+      "id": "retail_service",
+      "label": "Retail and personal service",
+      "tier": "entry",
+      "hourly_wage": 17.5,
+      "education": "high_school",
+      "schedule_variability": 0.75,
+      "source": "census_jobs"
+    },
+    {
+      "id": "warehouse_logistics",
+      "label": "Warehouse and material moving",
+      "tier": "entry_middle",
+      "hourly_wage": 20.5,
+      "education": "high_school",
+      "schedule_variability": 0.55,
+      "source": "census_jobs"
+    },
+    {
+      "id": "production",
+      "label": "Production and manufacturing",
+      "tier": "middle",
+      "hourly_wage": 22.0,
+      "education": "high_school",
+      "schedule_variability": 0.4,
+      "source": "census_jobs"
+    },
+    {
+      "id": "healthcare_support",
+      "label": "Healthcare support",
+      "tier": "middle",
+      "hourly_wage": 22.5,
+      "education": "certificate",
+      "schedule_variability": 0.65,
+      "source": "census_jobs"
+    },
+    {
+      "id": "skilled_trades",
+      "label": "Skilled trades and construction",
+      "tier": "middle_high",
+      "hourly_wage": 31.0,
+      "education": "apprenticeship",
+      "schedule_variability": 0.35,
+      "source": "census_jobs"
+    },
+    {
+      "id": "business_technology",
+      "label": "Business",
+      "technology and engineering": null,
+      "tier": "high",
+      "hourly_wage": 42.0,
+      "education": "bachelors",
+      "schedule_variability": 0.22,
+      "source": "census_jobs"
+    },
+    {
+      "id": "management",
+      "label": "Management",
+      "tier": "high",
+      "hourly_wage": 59.17,
+      "education": "bachelors",
+      "schedule_variability": 0.28,
+      "source": "census_jobs"
+    }
+  ],
+  "resident_archetypes": [
+    {
+      "id": "high_school_pathway",
+      "weight": 0.14,
+      "age_band": "16_18",
+      "income_band": "dependent",
+      "education": "high_school",
+      "work_hours": 10,
+      "caregiving_hours": 4,
+      "program_interest": 0.75
+    },
+    {
+      "id": "early_career_service",
+      "weight": 0.18,
+      "age_band": "18_29",
+      "income_band": "low",
+      "education": "high_school",
+      "work_hours": 32,
+      "caregiving_hours": 5,
+      "program_interest": 0.68
+    },
+    {
+      "id": "working_parent",
+      "weight": 0.22,
+      "age_band": "25_44",
+      "income_band": "lower_middle",
+      "education": "some_college",
+      "work_hours": 38,
+      "caregiving_hours": 22,
+      "program_interest": 0.62
+    },
+    {
+      "id": "displaced_worker",
+      "weight": 0.11,
+      "age_band": "35_59",
+      "income_band": "low",
+      "education": "high_school",
+      "work_hours": 12,
+      "caregiving_hours": 10,
+      "program_interest": 0.82
+    },
+    {
+      "id": "immigrant_professional",
+      "weight": 0.09,
+      "age_band": "25_54",
+      "income_band": "lower_middle",
+      "education": "bachelors",
+      "work_hours": 30,
+      "caregiving_hours": 12,
+      "program_interest": 0.79
+    },
+    {
+      "id": "skilled_midcareer",
+      "weight": 0.16,
+      "age_band": "30_59",
+      "income_band": "middle",
+      "education": "certificate",
+      "work_hours": 40,
+      "caregiving_hours": 10,
+      "program_interest": 0.45
+    },
+    {
+      "id": "college_pathway",
+      "weight": 0.1,
+      "age_band": "18_29",
+      "income_band": "low",
+      "education": "some_college",
+      "work_hours": 22,
+      "caregiving_hours": 6,
+      "program_interest": 0.76
+    }
+  ],
+  "demographic_calibration": {
+    "population": 200117,
+    "households": 80222,
+    "persons_per_household": 2.38,
+    "poverty_rate": 0.169,
+    "median_household_income": 69108,
+    "bachelors_or_higher": 0.416,
+    "foreign_born": 0.111,
+    "language_other_than_english_home": 0.164,
+    "disability_under_65": 0.093,
+    "mean_commute_minutes": 19.0,
+    "note": "Agent archetypes are synthetic joint distributions constrained by these city-level marginals, not Census microdata."
+  },
+  "needs_model": {
+    "weekly_sleep_target_hours": 56,
+    "meal_events_per_day": 3,
+    "preparation_hours_per_active_day": 0.75,
+    "bathroom_events_per_day": 5,
+    "social_events_target_per_week": 4,
+    "thresholds": {
+      "hunger": 0.72,
+      "fatigue": 0.7,
+      "bathroom": 0.8,
+      "stress": 0.76
+    },
+    "energy_weights": {
+      "sleep": 0.35,
+      "food": 0.25,
+      "preparation": 0.15,
+      "stress": 0.15,
+      "social": 0.1
+    }
+  },
+  "sources": [
+    {
+      "id": "census_quickfacts",
+      "layer": "context",
+      "title": "U.S. Census Bureau QuickFacts, Grand Rapids city, Michigan",
+      "url": "https://www.census.gov/quickfacts/fact/table/grandrapidscitymichigan/PST045224",
+      "observed": {
+        "population_2024": 200117,
+        "households_2020_2024": 80222,
+        "persons_per_household": 2.38,
+        "poverty_rate": 0.169,
+        "median_household_income_2024_dollars": 69108,
+        "bachelors_or_higher": 0.416,
+        "foreign_born": 0.111,
+        "language_other_than_english_home": 0.164,
+        "disability_under_65": 0.093,
+        "mean_commute_minutes": 19.0
+      }
+    },
+    {
+      "id": "city_neighborhood_map",
+      "layer": "context",
+      "title": "City of Grand Rapids Wards and Neighborhoods Map, July 2025",
+      "url": "https://www.grandrapidsmi.gov/media/duthywob/cogr_wards_neighborhoods.pdf"
+    },
+    {
+      "id": "city_neighborhood_guide",
+      "layer": 5,
+      "title": "City of Grand Rapids Neighborhood Living Guide 2025",
+      "url": "https://www.grandrapidsmi.gov/media/vgfficfz/neighborhood-living-guide-2025_eng_web.pdf"
+    },
+    {
+      "id": "city_master_plan",
+      "layer": 1,
+      "title": "Bridge to Our Future, Grand Rapids Community Master Plan",
+      "url": "https://www.grandrapidsmi.gov/files/assets/public/v/1/departments/planning-department/files/master-plan/2024-cmp-chapters/full-plan_bridge-to-our-future_1.pdf"
+    },
+    {
+      "id": "grps_schools",
+      "layer": 3,
+      "title": "Grand Rapids Public Schools directory",
+      "url": "https://grps.org/schools/",
+      "observed": {
+        "district_schools": 40,
+        "district_scholars": 14000,
+        "languages": 70
+      }
+    },
+    {
+      "id": "kent_isd",
+      "layer": 3,
+      "title": "Kent ISD area schools and district map",
+      "url": "https://www.kentisd.org/administrative-services/about-kent-isd/area-schools/",
+      "observed": {
+        "public_districts": 20,
+        "schools": 280,
+        "students": 101500
+      }
+    },
+    {
+      "id": "census_jobs",
+      "layer": 4,
+      "title": "BLS Grand Rapids-Wyoming occupational employment and wage estimates",
+      "url": "https://www.bls.gov/oes/2023/may/oes_24340.htm",
+      "observed": {
+        "total_employment": 536790,
+        "all_occupations_median_hourly": 22.25,
+        "management_mean_hourly": 59.17
+      }
+    },
+    {
+      "id": "chamber",
+      "layer": 4,
+      "title": "Grand Rapids Chamber and Business Directory",
+      "url": "https://grandrapids.org/",
+      "directory_url": "https://web.grandrapids.org/",
+      "observed": {
+        "president_circle_signals": [
+          "Amway",
+          "Blue Cross Blue Shield of Michigan",
+          "Steelcase",
+          "Corewell Health",
+          "Meijer",
+          "Acrisure"
+        ]
+      }
+    },
+    {
+      "id": "west_michigan_works",
+      "layer": 2,
+      "title": "West Michigan Works job seeker and employer services",
+      "url": "https://www.westmiworks.org/job-seekers/",
+      "observed": {
+        "service_counties": 7,
+        "high_demand_jobs": 100,
+        "apprenticeship_industries": [
+          "healthcare",
+          "advanced_manufacturing",
+          "construction",
+          "information_technology",
+          "agribusiness"
+        ]
+      }
+    },
+    {
+      "id": "grcc_programs",
+      "layer": 3,
+      "title": "Grand Rapids Community College programs",
+      "url": "https://www.grcc.edu/programs",
+      "observed": {
+        "programs": 150
+      }
+    },
+    {
+      "id": "promise_zone",
+      "layer": 1,
+      "title": "Grand Rapids Promise Zone eligibility and pathways",
+      "url": "https://grpromisezone.com/eligibility/",
+      "observed": {
+        "eligible_high_schools": 25,
+        "grcc_credit_limit": 72
+      }
+    },
+    {
+      "id": "urban_league",
+      "layer": 2,
+      "title": "Urban League of West Michigan Center for Employment and Workforce Development",
+      "url": "https://www.grurbanleague.org/"
+    },
+    {
+      "id": "goodwill_achieve",
+      "layer": 2,
+      "title": "Goodwill of Greater Grand Rapids Achieve",
+      "url": "https://www.goodwillgr.org/achieve/"
+    },
+    {
+      "id": "mel_trotter",
+      "layer": 2,
+      "title": "Mel Trotter Ministries and Next Step workforce development",
+      "url": "https://www.meltrotter.org/workforce-development/"
+    },
+    {
+      "id": "other_way",
+      "layer": 5,
+      "title": "The Other Way Ministries",
+      "url": "https://theotherway.org/"
+    },
+    {
+      "id": "gvsu_pew",
+      "layer": 3,
+      "title": "Grand Valley State University Robert C. Pew Grand Rapids Campus",
+      "url": "https://www.gvsu.edu/meetatgvsu/grand-rapids-robert-c-pew-campus-156.htm"
+    },
+    {
+      "id": "aquinas",
+      "layer": 3,
+      "title": "Aquinas College contact and campus",
+      "url": "https://www.aquinas.edu/contact-us/index.html"
+    },
+    {
+      "id": "calvin",
+      "layer": 3,
+      "title": "Calvin University campus",
+      "url": "https://calvin.edu/mail-services"
+    },
+    {
+      "id": "cornerstone",
+      "layer": 3,
+      "title": "Cornerstone University",
+      "url": "https://www.cornerstone.edu/"
+    },
+    {
+      "id": "ferris_kcad",
+      "layer": 3,
+      "title": "Ferris State University Kendall College of Art and Design",
+      "url": "https://www.ferris.edu/art-design/about/map-and-directions.htm"
+    }
+  ],
+  "modeling_assumptions": [
+    "Neighborhood bounds and institution coordinates are schematic and preserve broad city relationships only.",
+    "Job capacities and hourly wages are representative archetype inputs, not employer-specific vacancy claims.",
+    "Resident archetypes are synthetic combinations calibrated to city-level Census marginals.",
+    "Chamber members are used as labor-demand signals; directory membership does not imply participation in a workforce program.",
+    "Layer 2 program operators and Layer 3 training engines remain the primary program-entry layers."
+  ],
+  "mobility_speeds": {
+    "walk": 4800,
+    "bike": 16000,
+    "car": 40000
+  },
+  "clock": {
+    "hours_per_day": 24,
+    "days_per_week": 7,
+    "browser_step_minutes": 15
+  }
+}

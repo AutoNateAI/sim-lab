@@ -24,18 +24,27 @@ for (const scenario of scenarios) {
     channel: 'chrome',
     headless,
     slowMo: headless ? 0 : 120,
-    args: ['--disable-gpu', '--disable-features=CalculateNativeWinOcclusion'],
+    args: [
+      '--disable-gpu',
+      '--disable-features=CalculateNativeWinOcclusion',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+    ],
   });
   const page = await browser.newPage({viewport: {width: 1440, height: 1000}, deviceScaleFactor: 1, colorScheme: 'light'});
   await page.goto(appUrl, {waitUntil: 'networkidle'});
   await page.locator('html[data-has-hydrated="true"]').waitFor();
+  const navigation = page.getByRole('navigation').first();
+  if (await navigation.count()) await navigation.evaluate((element) => { element.style.visibility = 'hidden'; });
   const simulator = page.getByTestId('city-opportunity-simulator');
   await simulator.waitFor({state: 'attached'});
   await simulator.scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, -96));
+  await page.bringToFront();
   await page.getByRole('button', {name: 'Reset model'}).click();
   await page.getByRole('button', {name: scenario.label, exact: true}).click();
   await page.waitForFunction(() => document.querySelector('[data-testid="simulation-results"] strong')?.textContent?.length);
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(600);
 
   const metrics = {};
   const cards = page.getByTestId('simulation-results').locator(':scope > div');
@@ -43,7 +52,7 @@ for (const scenario of scenarios) {
     const card = cards.nth(index);
     metrics[(await card.locator('span').innerText()).trim()] = (await card.locator('strong').innerText()).trim();
   }
-  const engine = (await simulator.locator('header, div').filter({hasText: /^MESA [\d.]+ OUTPUT/}).first().locator('span').innerText()).trim();
+  const engine = (await simulator.getByText(/^MESA [\d.]+ RUNS/).innerText()).trim();
   experiments.push({id: scenario.id, mesa_engine: engine, metrics, screenshot: `assets/${scenario.screenshot}`});
   await simulator.screenshot({path: resolve(output, scenario.screenshot), animations: 'disabled'});
   await page.close();
@@ -51,5 +60,5 @@ for (const scenario of scenarios) {
 }
 
 await writeFile(resultsPath, `${JSON.stringify({captured_at: new Date().toISOString(), app_url: appUrl, headed: !headless, experiments}, null, 2)}\n`);
-console.log(`Captured ${experiments.length} headed tutorial experiments in ${output}`);
+console.log(`Captured ${experiments.length} ${headless ? 'headless' : 'headed'} tutorial experiments in ${output}`);
 console.log(JSON.stringify(experiments, null, 2));

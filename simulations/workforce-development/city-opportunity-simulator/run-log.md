@@ -32,3 +32,27 @@ Capture URL: `http://127.0.0.1:3000/simulations/workforce-development/city-oppor
 Capture URL: `http://127.0.0.1:5174/`.
 Scenario: `workforce_001-baseline-seed42`.
 Asset: `simulations/assets/sim-dashboard-dark.png`.
+
+## 2026-06-28 — hourly spatial city model
+
+- Added a Mesa-authored city contract with a residential street grid, education organizations, support services, and a business district.
+- Distributed resident homes deterministically along streets and assigned individual weekday start/end schedules.
+- Added walking, biking, and driving modes with seeded speed variation and finite road-constrained travel.
+- Added deterministic lane separation as the first collision-avoidance rule; agents cannot teleport between destinations or travel across turf.
+- Added a 2,689-position hourly clock across 16 seven-day weeks and connected the Phaser replay to hour/day/week state.
+- Added dawn, daylight, dusk, and night overlays and updated the dashboard capture at week 0, day 1, 11:00.
+
+Spatial artifacts: `world.json` and `hourly_clock.csv`.
+
+## 2026-06-28 — continuous travel and time access
+
+- Replaced direct coordinate tweens with continuous interpolation along Mesa-authored route segments.
+- Advanced the dashboard in 15-minute steps and treated start time as target arrival time, making commute distance visible.
+- Added directional lanes, signal stops, following gaps, queue delay, home entry, and hidden at-home state.
+- Added resident priority, active days, weekly time budget, action hours, commute hours, and time-access effects to every pipeline transition.
+- Regenerated all four seeded Mesa run bundles under model version 2.1.0.
+
+Dashboard verification URL: `http://127.0.0.1:5174/`.
+Tutorial capture URL: `http://127.0.0.1:3001/simulations/workforce-development/city-opportunity-simulator` (headed Chrome).
+Final tutorial image files were re-rendered with the same script in headless mode after macOS headed-window occlusion produced corrupted pixels.
+- Added persistent destination labels for the support center, north and south training centers, and west and east employer hubs.

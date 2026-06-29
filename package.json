@@ -18,6 +18,7 @@
     "pdf:first": ".venv/bin/python .codex/skills/export-simulation-article/scripts/export_article_pdf.py simulations/workforce-development/city-opportunity-simulator/tutorial.md --title 'Find the Workforce Pipeline Bottleneck' --output simulations/workforce-development/city-opportunity-simulator/pdf/workforce_001-tutorial.pdf",
     "registry:build": "node scripts/build-registry.mjs",
     "registry:check": "node scripts/build-registry.mjs --check",
+    "gr:fetch-osm": "node simulations/workforce-development/city-opportunity-simulator/fetch-gr-osm.mjs",
     "mesa:generate": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py",
     "mesa:check": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/generate_mesa_results.py --check",
     "test:simulation": ".venv/bin/python simulations/workforce-development/city-opportunity-simulator/test_mesa_model.py",

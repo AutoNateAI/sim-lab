@@ -1,49 +1,53 @@
 {
-  "captured_at": "2026-06-28T04:43:03.137Z",
-  "app_url": "http://127.0.0.1:3000/simulations/workforce-development/city-opportunity-simulator",
-  "headed": true,
+  "captured_at": "2026-06-28T21:48:21.321Z",
+  "app_url": "http://127.0.0.1:3001/simulations/workforce-development/city-opportunity-simulator",
+  "headed": false,
   "experiments": [
     {
       "id": "baseline",
-      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "mesa_engine": "MESA 3.5.1 RUNS · SEED 42",
       "metrics": {
         "Residents reached": "212",
-        "Completed training": "148",
+        "Completed training": "154",
         "Employed": "90",
-        "Budget remaining": "$0k"
+        "Budget remaining": "$0k",
+        "Run artifacts": "606"
       },
       "screenshot": "assets/01-baseline-simulation.png"
     },
     {
       "id": "expanded-outreach",
-      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "mesa_engine": "MESA 3.5.1 RUNS · SEED 42",
       "metrics": {
-        "Residents reached": "236",
-        "Completed training": "149",
+        "Residents reached": "238",
+        "Completed training": "148",
         "Employed": "90",
-        "Budget remaining": "$0k"
+        "Budget remaining": "$0k",
+        "Run artifacts": "631"
       },
       "screenshot": "assets/02-expanded-outreach.png"
     },
     {
       "id": "expanded-training",
-      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "mesa_engine": "MESA 3.5.1 RUNS · SEED 42",
       "metrics": {
-        "Residents reached": "204",
-        "Completed training": "152",
+        "Residents reached": "203",
+        "Completed training": "157",
         "Employed": "90",
-        "Budget remaining": "$0k"
+        "Budget remaining": "$0k",
+        "Run artifacts": "602"
       },
       "screenshot": "assets/03-expanded-training.png"
     },
     {
       "id": "expanded-employer-demand",
-      "mesa_engine": "MESA 3.5.1 OUTPUT · SEED 42",
+      "mesa_engine": "MESA 3.5.1 RUNS · SEED 42",
       "metrics": {
-        "Residents reached": "204",
-        "Completed training": "152",
-        "Employed": "120",
-        "Budget remaining": "$0k"
+        "Residents reached": "203",
+        "Completed training": "157",
+        "Employed": "133",
+        "Budget remaining": "$0k",
+        "Run artifacts": "645"
       },
       "screenshot": "assets/04-expanded-employer-demand.png"
     }

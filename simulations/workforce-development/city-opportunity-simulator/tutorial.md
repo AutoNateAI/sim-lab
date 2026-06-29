@@ -36,7 +36,7 @@ Select **Outreach 16%** in the Mesa output viewer.
 
 ![Mesa outreach experiment with 16 percent weekly outreach](assets/02-expanded-outreach.png)
 
-Residents reached increased from 212 to 236, while employment stayed at 90. Outreach reached nearly the entire population, but it was not the final bottleneck; residents still had to pass through finite training seats and job openings.
+Residents reached increased from 212 to 238, while employment stayed at 90. Outreach reached nearly the entire population, but it was not the final bottleneck; residents still had to fit enrollment, training, and travel into finite time before competing for limited openings.
 
 ## 3. Test training capacity
 
@@ -46,7 +46,7 @@ Watch the orange “In training” line and the purple “Trained” line. A sea
 
 ![Mesa training-capacity experiment with 72 concurrent seats](assets/03-expanded-training.png)
 
-Doubling seats raised completed training from 148 to 152 while employment stayed at 90. Capacity produced more trained residents, but the 90 available openings became the next constraint.
+Doubling seats raised completed training from 154 to 157 while employment stayed at 90. Capacity produced more trained residents, but the 90 available openings became the next constraint.
 
 ## 4. Test employer demand
 
@@ -54,7 +54,7 @@ Select **Openings 160**. This Mesa run keeps 72 training seats and changes emplo
 
 ![Mesa employer-demand experiment with 160 openings and 124 residents employed](assets/04-expanded-employer-demand.png)
 
-Employment rose from 90 to 124 while completed training remained exactly 152. That isolates employer demand as the binding constraint in the 72-seat run.
+Employment rose from 90 to 133 while completed training remained exactly 157. That isolates employer demand as the binding constraint in the 72-seat run.
 
 ## 5. Make a defensible claim
 

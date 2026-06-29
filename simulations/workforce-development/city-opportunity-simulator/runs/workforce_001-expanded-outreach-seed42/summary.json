@@ -19,180 +19,180 @@
     "job_openings": 90
   },
   "metrics": {
-    "residentsReached": 236,
-    "completedTraining": 149,
-    "employed": 90,
+    "residentsReached": 239,
+    "completedTraining": 188,
+    "employed": 126,
     "budgetRemaining": 0,
     "jobsRemaining": 0
   },
   "weeks": [
     {
       "week": 0,
-      "unaware": 228,
+      "unaware": 192,
       "aware": 12,
       "training": 0,
       "trained": 0,
-      "employed": 0,
+      "employed": 36,
       "budgetRemaining": 600000,
       "jobsRemaining": 90
     },
     {
       "week": 1,
-      "unaware": 186,
+      "unaware": 148,
       "aware": 37,
-      "training": 17,
+      "training": 19,
       "trained": 0,
-      "employed": 0,
-      "budgetRemaining": 536848,
+      "employed": 36,
+      "budgetRemaining": 529848,
       "jobsRemaining": 90
     },
     {
       "week": 2,
-      "unaware": 145,
-      "aware": 59,
+      "unaware": 119,
+      "aware": 49,
       "training": 36,
       "trained": 0,
-      "employed": 0,
+      "employed": 36,
       "budgetRemaining": 466696,
       "jobsRemaining": 90
     },
     {
       "week": 3,
-      "unaware": 111,
-      "aware": 93,
+      "unaware": 87,
+      "aware": 81,
       "training": 36,
       "trained": 0,
-      "employed": 0,
+      "employed": 36,
       "budgetRemaining": 463044,
       "jobsRemaining": 90
     },
     {
       "week": 4,
-      "unaware": 87,
-      "aware": 100,
+      "unaware": 63,
+      "aware": 86,
       "training": 36,
-      "trained": 13,
-      "employed": 4,
-      "budgetRemaining": 399892,
+      "trained": 15,
+      "employed": 40,
+      "budgetRemaining": 392892,
       "jobsRemaining": 86
     },
     {
       "week": 5,
-      "unaware": 68,
-      "aware": 102,
+      "unaware": 46,
+      "aware": 87,
       "training": 36,
-      "trained": 27,
-      "employed": 7,
+      "trained": 26,
+      "employed": 45,
       "budgetRemaining": 329740,
-      "jobsRemaining": 83
-    },
-    {
-      "week": 6,
-      "unaware": 52,
-      "aware": 118,
-      "training": 36,
-      "trained": 25,
-      "employed": 9,
-      "budgetRemaining": 326088,
       "jobsRemaining": 81
     },
     {
-      "week": 7,
-      "unaware": 35,
-      "aware": 118,
+      "week": 6,
+      "unaware": 32,
+      "aware": 101,
       "training": 36,
-      "trained": 29,
-      "employed": 22,
-      "budgetRemaining": 262936,
-      "jobsRemaining": 68
+      "trained": 22,
+      "employed": 49,
+      "budgetRemaining": 326088,
+      "jobsRemaining": 77
+    },
+    {
+      "week": 7,
+      "unaware": 24,
+      "aware": 90,
+      "training": 36,
+      "trained": 28,
+      "employed": 62,
+      "budgetRemaining": 255936,
+      "jobsRemaining": 64
     },
     {
       "week": 8,
-      "unaware": 25,
-      "aware": 110,
+      "unaware": 18,
+      "aware": 79,
       "training": 36,
-      "trained": 33,
-      "employed": 36,
+      "trained": 32,
+      "employed": 75,
       "budgetRemaining": 192784,
-      "jobsRemaining": 54
+      "jobsRemaining": 51
     },
     {
       "week": 9,
-      "unaware": 17,
-      "aware": 118,
+      "unaware": 11,
+      "aware": 86,
       "training": 36,
-      "trained": 29,
-      "employed": 40,
+      "trained": 27,
+      "employed": 80,
       "budgetRemaining": 189132,
-      "jobsRemaining": 50
+      "jobsRemaining": 46
     },
     {
       "week": 10,
-      "unaware": 12,
-      "aware": 108,
+      "unaware": 9,
+      "aware": 69,
       "training": 36,
-      "trained": 37,
-      "employed": 47,
-      "budgetRemaining": 125980,
-      "jobsRemaining": 43
+      "trained": 38,
+      "employed": 88,
+      "budgetRemaining": 118980,
+      "jobsRemaining": 38
     },
     {
       "week": 11,
       "unaware": 7,
-      "aware": 94,
+      "aware": 55,
       "training": 36,
       "trained": 41,
-      "employed": 62,
+      "employed": 101,
       "budgetRemaining": 55828,
-      "jobsRemaining": 28
+      "jobsRemaining": 25
     },
     {
       "week": 12,
-      "unaware": 7,
-      "aware": 94,
+      "unaware": 6,
+      "aware": 56,
       "training": 36,
-      "trained": 32,
-      "employed": 71,
+      "trained": 33,
+      "employed": 109,
       "budgetRemaining": 52176,
-      "jobsRemaining": 19
+      "jobsRemaining": 17
     },
     {
       "week": 13,
-      "unaware": 5,
-      "aware": 84,
-      "training": 32,
-      "trained": 38,
-      "employed": 81,
+      "unaware": 3,
+      "aware": 46,
+      "training": 30,
+      "trained": 41,
+      "employed": 120,
       "budgetRemaining": 3024,
-      "jobsRemaining": 9
+      "jobsRemaining": 6
     },
     {
       "week": 14,
-      "unaware": 4,
-      "aware": 87,
+      "unaware": 1,
+      "aware": 49,
       "training": 13,
-      "trained": 46,
-      "employed": 90,
+      "trained": 51,
+      "employed": 126,
       "budgetRemaining": 0,
       "jobsRemaining": 0
     },
     {
       "week": 15,
-      "unaware": 4,
-      "aware": 87,
+      "unaware": 1,
+      "aware": 49,
       "training": 13,
-      "trained": 46,
-      "employed": 90,
+      "trained": 51,
+      "employed": 126,
       "budgetRemaining": 0,
       "jobsRemaining": 0
     },
     {
       "week": 16,
-      "unaware": 4,
-      "aware": 87,
+      "unaware": 1,
+      "aware": 51,
       "training": 0,
-      "trained": 59,
-      "employed": 90,
+      "trained": 62,
+      "employed": 126,
       "budgetRemaining": 0,
       "jobsRemaining": 0
     }
@@ -204,7 +204,7 @@
       "explanation": "Concurrent training slots fill, so access becomes a bottleneck even though interest keeps rising."
     },
     {
-      "week": 4,
+      "week": 0,
       "title": "Employment starts to move",
       "explanation": "Trained residents begin matching into openings and the pipeline becomes visible in the outcome curve."
     },
@@ -221,9 +221,11 @@
     "metrics_by_step": "runs/workforce_001-expanded-outreach-seed42/metrics_by_step.csv",
     "agent_states": "runs/workforce_001-expanded-outreach-seed42/agent_states.csv",
     "events": "runs/workforce_001-expanded-outreach-seed42/events.jsonl",
-    "narrative_beats": "runs/workforce_001-expanded-outreach-seed42/narrative_beats.json"
+    "narrative_beats": "runs/workforce_001-expanded-outreach-seed42/narrative_beats.json",
+    "world": "world.json",
+    "hourly_clock": "hourly_clock.csv"
   },
-  "event_count": 629,
+  "event_count": 3447,
   "agent_state_rows": 4080,
   "narrative_beat_count": 3
 }
