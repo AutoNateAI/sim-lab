@@ -1,8 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
-import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import type {ScheduleActivity} from './scene';
+import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import './styles.css';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
@@ -493,6 +493,8 @@ function App(): React.JSX.Element {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarMouth, setAvatarMouth] = useState(0);
   const [viewMode, setViewModeState] = useState<'spirit' | 'human'>('spirit');
+  const [subtitle, setSubtitle] = useState<string | null>(null);
+  const [sceneRunning, setSceneRunning] = useState(false);
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -605,6 +607,21 @@ function App(): React.JSX.Element {
     });
   }, []);
 
+  const handlePlayScene = useCallback(() => {
+    if (!sceneRef.current) return;
+    if (sceneRunning) {
+      sceneRef.current.stopScene();
+      setSceneRunning(false);
+      setSubtitle(null);
+    } else {
+      setSceneRunning(true);
+      sceneRef.current.playScene((text) => {
+        setSubtitle(text);
+        if (text === null) setSceneRunning(false);
+      });
+    }
+  }, [sceneRunning]);
+
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
     sceneRef.current?.setViewMode(next);
@@ -668,13 +685,31 @@ function App(): React.JSX.Element {
               <span className="human-hud-count">0 / 5</span>
             </div>
           </div>
-          <div className="human-hud-controls">
-            <span className="human-hud-key">↑ ↓ ← →</span> Move / Turn
-            <span className="human-hud-divider">·</span>
-            <span className="human-hud-key">W A S D</span> Camera
-            <span className="human-hud-divider">·</span>
-            <span className="human-hud-key">Space</span> Jump
+          <div className="human-hud-bottom">
+            <button
+              className={`woc-btn play-scene-btn ${sceneRunning ? 'scene-active' : ''}`}
+              onClick={handlePlayScene}
+              title={sceneRunning ? 'Stop scene' : 'Play Day One cinematic'}
+            >
+              {sceneRunning ? '⏹ Stop Scene' : '▶ Play Scene'}
+            </button>
+            {!sceneRunning && (
+              <div className="human-hud-controls">
+                <span className="human-hud-key">↑ ↓ ← →</span> Move / Turn
+                <span className="human-hud-divider">·</span>
+                <span className="human-hud-key">W A S D</span> Camera
+                <span className="human-hud-divider">·</span>
+                <span className="human-hud-key">Space</span> Jump
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* Scene subtitle overlay */}
+      {subtitle && (
+        <div className="scene-subtitle">
+          <div className="scene-subtitle-inner">{subtitle}</div>
         </div>
       )}
 

@@ -4,6 +4,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
+import {ScenePlayer, DAY_ONE_SCENE, type SceneController} from './scene_player';
 
 // ─── WoC WORLD CONSTANTS (Zone 1 — Eastbrook Vale) ───────────────────────────
 
@@ -456,6 +457,10 @@ export class WocScene {
     }
   };
   private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
+
+  // Scene player — automated cinematic sequences
+  private scenePlayer: ScenePlayer | null = null;
+  private onSceneSubtitle: ((text: string | null) => void) | null = null;
 
   // Follow mode
   private readonly followedIds = new Set<string>();
@@ -926,7 +931,19 @@ export class WocScene {
       }
 
       this.autonate?.update(delta);
-      if (this.viewMode === 'human') this.updateHumanMode(delta);
+
+      // Scene player drives Autonate automatically; overrides manual input when active
+      if (this.scenePlayer) {
+        this.scenePlayer.update(delta);
+        if (this.scenePlayer.done) {
+          this.scenePlayer = null;
+          this.onSceneSubtitle?.(null);
+        }
+        // Camera still chases Autonate during scenes
+        if (this.autonate) this.updateChaseCamera(delta);
+      } else if (this.viewMode === 'human') {
+        this.updateHumanMode(delta);
+      }
 
       this.renderer.render(this.scene, this.camera);
       this.animId = requestAnimationFrame(tick);
@@ -1063,7 +1080,12 @@ export class WocScene {
       }
     }
 
-    // ── Chase camera (follows camYaw / camDist / camPitch) ───────────────────
+    // ── Chase camera ─────────────────────────────────────────────────────────
+    this.updateChaseCamera(dt);
+  }
+
+  private updateChaseCamera(dt: number): void {
+    if (!this.autonate) return;
     const ap = this.autonate.root.position;
     const hDist = Math.cos(this.camPitch) * this.camDist;
     const targetCam = new THREE.Vector3(
@@ -1097,5 +1119,62 @@ export class WocScene {
 
   get autonateLoaded(): boolean {
     return this.autonate !== null;
+  }
+
+  // ─── SCENE PLAYER API ────────────────────────────────────────────────────────
+
+  /** Play the Day One cinematic. Autonate is driven automatically; camera follows. */
+  playScene(onSubtitle: (text: string | null) => void): void {
+    this.stopScene();
+    this.onSceneSubtitle = onSubtitle;
+
+    // Enter human view so camera chase and controls are correct
+    if (this.viewMode !== 'human') this.setViewMode('human');
+
+    const ctrl = this.makeSceneController();
+    this.scenePlayer = new ScenePlayer(ctrl, DAY_ONE_SCENE, onSubtitle);
+  }
+
+  stopScene(): void {
+    this.scenePlayer?.stop();
+    this.scenePlayer = null;
+    this.onSceneSubtitle?.(null);
+    this.onSceneSubtitle = null;
+  }
+
+  get isPlayingScene(): boolean {
+    return this.scenePlayer !== null;
+  }
+
+  /** Build the SceneController interface backed by this scene's mutable state. */
+  private makeSceneController(): SceneController {
+    return {
+      getPosition: () => {
+        const p = this.autonate?.root.position ?? new THREE.Vector3();
+        return {x: p.x, y: p.y, z: p.z};
+      },
+      getFacing: () => this.autonateFacing,
+      setFacing: (rad) => {
+        this.autonateFacing = rad;
+        this.autonate?.setFacing(rad);
+      },
+      setPosition: (x, y, z) => {
+        this.autonate?.setPosition(x, y, z);
+      },
+      terrainHeight: (x, z) => terrainHeight(x, z),
+      playClip: (name, loop) => {
+        this.autonate?.play(name, loop);
+      },
+      setMouthOpen: (amp) => {
+        this.autonate?.setMouthOpen(amp);
+      },
+      setIsWalking: (b) => {
+        this.autonateIsWalking = b;
+      },
+      setCamYaw:   (v) => { this.camYaw   = v; },
+      setCamPitch: (v) => { this.camPitch = v; },
+      setCamDist:  (v) => { this.camDist  = v; },
+      getCamYaw:   ()  => this.camYaw,
+    };
   }
 }
