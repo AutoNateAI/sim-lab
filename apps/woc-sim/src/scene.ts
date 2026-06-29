@@ -803,8 +803,9 @@ export class WocScene {
     pavRoof.rotation.y = Math.PI / 4;
     marketGroup.add(pavRoof);
     // Pavilion glow lanterns
-    marketGroup.add(Object.assign(new THREE.PointLight(0xffcc66, 8, 20),
-      {position: new THREE.Vector3(mx, my + 5, mz + 4)}));
+    const pavLight = new THREE.PointLight(0xffcc66, 8, 20);
+    pavLight.position.set(mx, my + 5, mz + 4);
+    marketGroup.add(pavLight);
 
     // Vendor stalls — table + angled tarp
     const stallDefs = [
