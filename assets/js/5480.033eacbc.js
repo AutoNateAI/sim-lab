@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunksim_lab=self.webpackChunksim_lab||[]).push([["5480"],{872(e,s,a){a.d(s,{createPacketServices:()=>c.$});var c=a(9773);a(1400)}}]);
