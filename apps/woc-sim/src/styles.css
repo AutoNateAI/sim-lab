@@ -416,6 +416,63 @@ body { background: #040810; }
   pointer-events: all;
 }
 
+/* HUD action buttons row */
+.hud-btn-row {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+}
+.hud-action-btn {
+  font: 700 0.72rem/1 'DM Mono', monospace;
+  padding: 7px 16px; border-radius: 8px;
+  letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.75);
+  cursor: pointer; transition: all 0.15s;
+}
+.hud-action-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.35);
+  color: #fff;
+}
+.hud-action-btn:disabled { opacity: 0.35; cursor: default; }
+.hud-action-btn.rec-active {
+  background: rgba(220,40,40,0.2);
+  border-color: rgba(255,80,80,0.55);
+  color: #ff6060;
+  box-shadow: 0 0 12px rgba(255,60,60,0.25);
+}
+.hud-action-btn.replay-btn {
+  background: rgba(0,204,170,0.12);
+  border-color: rgba(0,204,170,0.4);
+  color: #00CCAA;
+}
+.hud-action-btn.replay-btn:hover {
+  background: rgba(0,204,170,0.22);
+  box-shadow: 0 0 12px rgba(0,204,170,0.3);
+}
+.hud-action-btn.export-btn {
+  background: rgba(120,100,200,0.12);
+  border-color: rgba(140,120,220,0.35);
+  color: #aa99ee;
+}
+
+/* REC indicator */
+.rec-indicator {
+  display: flex; align-items: center; gap: 7px;
+  font: 700 0.72rem/1 'DM Mono', monospace;
+  color: #ff6060; letter-spacing: 0.1em;
+}
+.rec-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #ff3030;
+  box-shadow: 0 0 8px #ff3030;
+  animation: rec-pulse 1s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
 /* Play Scene button */
 .play-scene-btn {
   font: 700 0.75rem/1 'DM Mono', monospace;

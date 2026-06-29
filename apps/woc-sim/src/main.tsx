@@ -495,6 +495,11 @@ function App(): React.JSX.Element {
   const [viewMode, setViewModeState] = useState<'spirit' | 'human'>('spirit');
   const [subtitle, setSubtitle] = useState<string | null>(null);
   const [sceneRunning, setSceneRunning] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [hasRecording, setHasRecording] = useState(false);
+  const [playingBack, setPlayingBack] = useState(false);
+  const [recTime, setRecTime] = useState(0);
+  const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -607,6 +612,50 @@ function App(): React.JSX.Element {
     });
   }, []);
 
+  const handleToggleRecord = useCallback(() => {
+    if (!sceneRef.current) return;
+    if (recording) {
+      sceneRef.current.stopRecording();
+      setRecording(false);
+      setHasRecording(true);
+      if (recTimerRef.current) clearInterval(recTimerRef.current);
+    } else {
+      setHasRecording(false);
+      setPlayingBack(false);
+      setRecTime(0);
+      sceneRef.current.startRecording();
+      setRecording(true);
+      recTimerRef.current = setInterval(() => {
+        setRecTime((t) => t + 1);
+      }, 1000);
+    }
+  }, [recording]);
+
+  const handlePlayback = useCallback(() => {
+    if (!sceneRef.current || !hasRecording) return;
+    setPlayingBack(true);
+    sceneRef.current.playRecording((text) => {
+      setSubtitle(text);
+      if (text === null) setPlayingBack(false);
+    });
+  }, [hasRecording]);
+
+  const handleStopPlayback = useCallback(() => {
+    sceneRef.current?.stopPlayback();
+    setPlayingBack(false);
+    setSubtitle(null);
+  }, []);
+
+  const handleExportRecording = useCallback(() => {
+    if (!sceneRef.current) return;
+    const json = sceneRef.current.exportRecording();
+    const blob = new Blob([json], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `autonate_scene_${Date.now()}.json`;
+    a.click();
+  }, []);
+
   const handlePlayScene = useCallback(() => {
     if (!sceneRef.current) return;
     if (sceneRunning) {
@@ -631,6 +680,18 @@ function App(): React.JSX.Element {
     // Spirit view: resume playing
     if (next === 'spirit') setIsPlaying(true);
   }, [viewMode]);
+
+  // R key = toggle recording while in Human View
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if (e.code === 'KeyR' && viewMode === 'human' && !e.repeat) handleToggleRecord();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [viewMode, handleToggleRecord]);
+
+  // Clean up recording timer on unmount
+  useEffect(() => () => { if (recTimerRef.current) clearInterval(recTimerRef.current); }, []);
 
   const isHuman = viewMode === 'human';
 
@@ -686,20 +747,60 @@ function App(): React.JSX.Element {
             </div>
           </div>
           <div className="human-hud-bottom">
-            <button
-              className={`woc-btn play-scene-btn ${sceneRunning ? 'scene-active' : ''}`}
-              onClick={handlePlayScene}
-              title={sceneRunning ? 'Stop scene' : 'Play Day One cinematic'}
-            >
-              {sceneRunning ? '⏹ Stop Scene' : '▶ Play Scene'}
-            </button>
-            {!sceneRunning && (
+            {/* Recording indicator */}
+            {recording && (
+              <div className="rec-indicator">
+                <span className="rec-dot" />
+                REC {String(Math.floor(recTime / 60)).padStart(2,'0')}:{String(recTime % 60).padStart(2,'0')}
+              </div>
+            )}
+
+            {/* Action buttons row */}
+            <div className="hud-btn-row">
+              {/* Record */}
+              <button
+                className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
+                onClick={handleToggleRecord}
+                title={recording ? 'Stop recording (R)' : 'Start recording (R)'}
+                disabled={playingBack || sceneRunning}
+              >
+                {recording ? '⏹ Stop' : '⏺ Record'}
+              </button>
+
+              {/* Replay / stop playback */}
+              {hasRecording && !recording && (
+                playingBack ? (
+                  <button className="woc-btn hud-action-btn" onClick={handleStopPlayback}>⏹ Stop</button>
+                ) : (
+                  <>
+                    <button className="woc-btn hud-action-btn replay-btn" onClick={handlePlayback}>▶ Replay</button>
+                    <button className="woc-btn hud-action-btn export-btn" onClick={handleExportRecording} title="Export recording as JSON">↓ Export</button>
+                  </>
+                )
+              )}
+
+              {/* Scripted scene */}
+              {!recording && !hasRecording && (
+                <button
+                  className={`woc-btn hud-action-btn ${sceneRunning ? 'scene-active' : ''}`}
+                  onClick={handlePlayScene}
+                  title={sceneRunning ? 'Stop scene' : 'Play scripted Day One scene'}
+                >
+                  {sceneRunning ? '⏹ Scene' : '▶ Scene'}
+                </button>
+              )}
+            </div>
+
+            {/* Controls hint — hide during recording so it doesn't distract */}
+            {!recording && !playingBack && (
               <div className="human-hud-controls">
                 <span className="human-hud-key">↑ ↓ ← →</span> Move / Turn
                 <span className="human-hud-divider">·</span>
                 <span className="human-hud-key">W A S D</span> Camera
                 <span className="human-hud-divider">·</span>
                 <span className="human-hud-key">Space</span> Jump
+                <span className="human-hud-divider">·</span>
+                <span className="human-hud-key">R</span> Record
               </div>
             )}
           </div>

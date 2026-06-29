@@ -5,6 +5,7 @@ import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
 import {ScenePlayer, DAY_ONE_SCENE, type SceneController} from './scene_player';
+import {RecordingSession, SessionPlayback, type RecordState} from './recorder';
 
 // ─── WoC WORLD CONSTANTS (Zone 1 — Eastbrook Vale) ───────────────────────────
 
@@ -463,6 +464,11 @@ export class WocScene {
   // Scene player — automated cinematic sequences
   private scenePlayer: ScenePlayer | null = null;
   private onSceneSubtitle: ((text: string | null) => void) | null = null;
+
+  // Record / replay
+  private readonly recorder = new RecordingSession();
+  private playback: SessionPlayback | null = null;
+  private autonateCurClip = 'Idle';
 
   // Follow mode
   private readonly followedIds = new Set<string>();
@@ -935,17 +941,28 @@ export class WocScene {
 
       this.autonate?.update(delta);
 
-      // Scene player drives Autonate automatically; overrides manual input when active
-      if (this.scenePlayer) {
+      // Priority: playback > scenePlayer > manual control
+      if (this.playback && !this.playback.done) {
+        this.playback.update(delta);
+        if (this.playback.done) {
+          this.playback = null;
+          this.onSceneSubtitle?.(null);
+        }
+        if (this.autonate) this.updateChaseCamera(delta, true);
+      } else if (this.scenePlayer) {
         this.scenePlayer.update(delta);
         if (this.scenePlayer.done) {
           this.scenePlayer = null;
           this.onSceneSubtitle?.(null);
         }
-        // Camera dollies to new shot position during scenes (cinematic = slower lerp)
         if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.viewMode === 'human') {
         this.updateHumanMode(delta);
+      }
+
+      // Capture state AFTER all moves applied — record at 24fps while in human view
+      if (this.recorder.isRecording && this.viewMode === 'human' && !this.playback) {
+        this.recorder.capture(delta, this.getRecordState());
       }
 
       this.renderer.render(this.scene, this.camera);
@@ -1076,9 +1093,11 @@ export class WocScene {
     if (!this.isJumping) {
       if (moving && !this.autonateIsWalking) {
         this.autonate.play('Walking_A', true, 0.15);
+        this.autonateCurClip = 'Walking_A';
         this.autonateIsWalking = true;
       } else if (!moving && this.autonateIsWalking) {
         this.autonate.play('Idle', true, 0.2);
+        this.autonateCurClip = 'Idle';
         this.autonateIsWalking = false;
       }
     }
@@ -1114,6 +1133,7 @@ export class WocScene {
   /** Play an animation clip on the Autonate avatar. No-op if not loaded yet. */
   playAutonatePose(clip: string, loop = true): void {
     this.autonate?.play(clip, loop);
+    this.autonateCurClip = clip;
   }
 
   /**
@@ -1131,6 +1151,56 @@ export class WocScene {
 
   get autonateLoaded(): boolean {
     return this.autonate !== null;
+  }
+
+  // ─── RECORD / REPLAY API ──────────────────────────────────────────────────────
+
+  startRecording(): void {
+    this.stopScene();
+    this.stopPlayback();
+    if (this.viewMode !== 'human') this.setViewMode('human');
+    this.recorder.start();
+  }
+
+  stopRecording(): void {
+    this.recorder.stop();
+  }
+
+  playRecording(onSubtitle: (text: string | null) => void): void {
+    if (!this.recorder.hasFrames) return;
+    this.stopScene();
+    this.stopPlayback();
+    this.onSceneSubtitle = onSubtitle;
+    if (this.viewMode !== 'human') this.setViewMode('human');
+    const ctrl = this.makeSceneController();
+    this.playback = new SessionPlayback(this.recorder.getFrames(), ctrl, onSubtitle);
+  }
+
+  stopPlayback(): void {
+    this.playback?.stop();
+    this.playback = null;
+    this.onSceneSubtitle?.(null);
+  }
+
+  exportRecording(): string { return this.recorder.toJSON(); }
+
+  get isRecording():  boolean { return this.recorder.isRecording; }
+  get hasRecording(): boolean { return this.recorder.hasFrames; }
+  get recordingDuration(): number { return this.recorder.duration; }
+  get isPlayingBack(): boolean { return this.playback !== null && !this.playback.done; }
+
+  private getRecordState(): RecordState {
+    const ap = this.autonate?.root.position ?? {x: 4, y: 1.5, z: 8};
+    return {
+      px: ap.x, py: ap.y, pz: ap.z,
+      facing:   this.autonateFacing,
+      clip:     this.autonateCurClip,
+      mouth:    this.autonate?.mouthOpen ?? 0,
+      camYaw:   this.camYaw,
+      camPitch: this.camPitch,
+      camDist:  this.camDist,
+      subtitle: null,
+    };
   }
 
   // ─── SCENE PLAYER API ────────────────────────────────────────────────────────
@@ -1176,6 +1246,7 @@ export class WocScene {
       terrainHeight: (x, z) => terrainHeight(x, z),
       playClip: (name, loop) => {
         this.autonate?.play(name, loop);
+        this.autonateCurClip = name;
       },
       setMouthOpen: (amp) => {
         this.autonate?.setMouthOpen(amp);

@@ -173,10 +173,15 @@ export class AutonateCharacter {
    *   const rms = Math.sqrt(buffer.reduce((s,v) => s + (v-128)**2, 0) / buffer.length);
    *   autonate.setMouthOpen(Math.min(1, rms / 40));
    */
+  private _mouthOpen = 0;
+
   setMouthOpen(amplitude: number): void {
+    this._mouthOpen = Math.max(0, Math.min(1, amplitude));
     if (!this.jaw) return;
-    this.jaw.rotation.x = JAW_MAX_ROTATION * Math.max(0, Math.min(1, amplitude));
+    this.jaw.rotation.x = JAW_MAX_ROTATION * this._mouthOpen;
   }
+
+  get mouthOpen(): number { return this._mouthOpen; }
 
   // ─── TRANSFORM ───────────────────────────────────────────────────────────
 
