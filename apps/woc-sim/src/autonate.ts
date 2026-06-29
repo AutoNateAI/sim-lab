@@ -59,6 +59,9 @@ export class AutonateCharacter {
   private headBone: THREE.Object3D | null = null;
   /** Procedural jaw proxy parented to headBone for lip sync. */
   private jaw: THREE.Mesh | null = null;
+  /** Floating pointer cone above the avatar — added to root so it moves automatically. */
+  private pointer: THREE.Mesh | null = null;
+  private elapsed = 0;
 
   // ─── LOAD ────────────────────────────────────────────────────────────────
 
@@ -121,6 +124,19 @@ export class AutonateCharacter {
     this.root.scale.setScalar(1.8);
     this.root.add(model);
 
+    // Floating pointer cone — tip points down, bobs in update().
+    // Position is in root local space (pre-scale): 2.8 × 1.8 = ~5 world units above feet.
+    const pGeo = new THREE.ConeGeometry(0.44, 1.4, 6);
+    const pMat = new THREE.MeshStandardMaterial({
+      color: 0x00CCAA, emissive: 0x00CCAA, emissiveIntensity: 3,
+      roughness: 0, transparent: true, opacity: 0.92, depthTest: false,
+    });
+    this.pointer = new THREE.Mesh(pGeo, pMat);
+    this.pointer.rotation.x = Math.PI;   // tip faces down
+    this.pointer.position.y = 2.8;
+    this.pointer.renderOrder = 999;
+    this.root.add(this.pointer);
+
     this.play('Idle', true);
   }
 
@@ -176,6 +192,10 @@ export class AutonateCharacter {
 
   update(dt: number): void {
     this.mixer?.update(dt);
+    this.elapsed += dt;
+    if (this.pointer) {
+      this.pointer.position.y = 2.8 + Math.sin(this.elapsed * 3) * 0.15;
+    }
   }
 
   // ─── LIP SYNC CAPABILITY REPORT ──────────────────────────────────────────
