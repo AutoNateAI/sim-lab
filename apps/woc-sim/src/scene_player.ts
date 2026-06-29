@@ -85,7 +85,8 @@ export const DAY_ONE_SCENE: SceneAct[] = [
 // ─── SCENE PLAYER ─────────────────────────────────────────────────────────────
 
 export class ScenePlayer {
-  done = false;
+  done    = false;
+  private _paused  = false;
 
   private actIdx   = 0;
   private actTimer = 0;
@@ -94,6 +95,11 @@ export class ScenePlayer {
   private prevClip  = 'Idle';
   private isTalking = false;
 
+  get isPaused(): boolean { return this._paused; }
+
+  pause():  void { this._paused = true; }
+  resume(): void { this._paused = false; }
+
   constructor(
     private readonly ctrl: SceneController,
     private readonly acts: SceneAct[],
@@ -101,7 +107,7 @@ export class ScenePlayer {
   ) {}
 
   update(dt: number): void {
-    if (this.done) return;
+    if (this.done || this._paused) return;
 
     const act = this.acts[this.actIdx];
     if (!act) {

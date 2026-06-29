@@ -5,7 +5,7 @@ import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
 import {ScenePlayer, DAY_ONE_SCENE, type SceneController, type SceneAct} from './scene_player';
-import {RecordingSession, SessionPlayback, type RecordState} from './recorder';
+import {RecordingSession, SessionPlayback, type RecordState, type CamOverride} from './recorder';
 import {type EpisodeNpc, type DialogueLine, INTERACTION_RADIUS} from './npcs';
 
 // ─── WoC WORLD CONSTANTS (Zone 1 — Eastbrook Vale) ───────────────────────────
@@ -491,7 +491,37 @@ export class WocScene {
 
   // Follow-locked camera — keeps camera behind character during auto-play+record
   private followLocked = false;
+  private followLockReleaseUntil = 0;  // epoch ms — suppresses follow lock during manual cam input
   private onSceneDone: (() => void) | null = null;
+
+  // Trackpad / mouse camera orbit in Human View
+  private _pointerDown     = false;
+  private _lastPointerX    = 0;
+  private _lastPointerY    = 0;
+  private readonly onPointerDown = (e: PointerEvent): void => {
+    if (this.viewMode !== 'human') return;
+    this._pointerDown  = true;
+    this._lastPointerX = e.clientX;
+    this._lastPointerY = e.clientY;
+    this.followLockReleaseUntil = Date.now() + 2500;
+  };
+  private readonly onPointerMove = (e: PointerEvent): void => {
+    if (!this._pointerDown || this.viewMode !== 'human') return;
+    const dx = e.clientX - this._lastPointerX;
+    const dy = e.clientY - this._lastPointerY;
+    this._lastPointerX = e.clientX;
+    this._lastPointerY = e.clientY;
+    this.camYaw   -= dx * 0.006;
+    this.camPitch  = Math.max(0.05, Math.min(1.25, this.camPitch + dy * 0.006));
+    this.followLockReleaseUntil = Date.now() + 2500;
+  };
+  private readonly onPointerUp = (): void => { this._pointerDown = false; };
+  private readonly onWheel = (e: WheelEvent): void => {
+    if (this.viewMode !== 'human') return;
+    e.preventDefault();
+    this.camDist = Math.max(4, Math.min(22, this.camDist + e.deltaY * 0.02));
+    this.followLockReleaseUntil = Date.now() + 1500;
+  };
 
   // Follow mode
   private readonly followedIds = new Set<string>();
@@ -530,6 +560,11 @@ export class WocScene {
 
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+    canvas.addEventListener('pointerdown', this.onPointerDown);
+    canvas.addEventListener('pointermove', this.onPointerMove);
+    canvas.addEventListener('pointerup',   this.onPointerUp);
+    canvas.addEventListener('pointercancel', this.onPointerUp);
+    canvas.addEventListener('wheel', this.onWheel, {passive: false});
 
     this.buildWorld();
     this.modelsReady = this.preloadModels();
@@ -1089,6 +1124,8 @@ export class WocScene {
           this.playback = null;
           this.onSceneSubtitle?.(null);
         }
+        // Paused playback: full human controls so user can reposition and adjust camera
+        if (this.playback?.isPaused && this.autonate) this.updateHumanMode(delta);
         if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.scenePlayer) {
         this.scenePlayer.update(delta);
@@ -1100,6 +1137,8 @@ export class WocScene {
           this.onSceneDone = null;
           cb?.();
         }
+        // Paused episode: full human controls (move Autonate, orbit camera via WASD)
+        if (this.recorder.isPaused && this.autonate) this.updateHumanMode(delta);
         if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.viewMode === 'human') {
         this.updateHumanMode(delta);
@@ -1122,6 +1161,12 @@ export class WocScene {
     this.clearFollows();
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    const c = this.renderer.domElement;
+    c.removeEventListener('pointerdown', this.onPointerDown);
+    c.removeEventListener('pointermove', this.onPointerMove);
+    c.removeEventListener('pointerup',   this.onPointerUp);
+    c.removeEventListener('pointercancel', this.onPointerUp);
+    c.removeEventListener('wheel', this.onWheel);
     this.controls.dispose();
     this.renderer.dispose();
   }
@@ -1258,9 +1303,9 @@ export class WocScene {
     // Smooth terrain-Y separately — prevents camera bouncing over bumpy ground.
     this.smoothedCharY += (ap.y - this.smoothedCharY) * Math.min(1, dt * 3);
 
-    // Follow-lock: always drift camera yaw toward directly behind the character.
-    // Wraps angle correctly so camera never spins 360° the wrong way.
-    if (this.followLocked) {
+    // Follow-lock: drift camera yaw toward behind the character.
+    // Suppressed for 2.5s after trackpad/wheel input so the user's manual angle wins.
+    if (this.followLocked && Date.now() > this.followLockReleaseUntil) {
       const target = this.autonateFacing + Math.PI;
       const diff = ((target - this.camYaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
       this.camYaw += diff * Math.min(1, dt * 2.5);
@@ -1465,7 +1510,10 @@ export class WocScene {
     this.onSceneSubtitle = onSubtitle;
     if (this.viewMode !== 'human') this.setViewMode('human');
     const ctrl = this.makeSceneController();
-    this.playback = new SessionPlayback(this.recorder.getFrames(), ctrl, onSubtitle);
+    // Pass live overrides reference — post-prod edits apply immediately to replay
+    this.playback = new SessionPlayback(
+      this.recorder.getFrames(), ctrl, onSubtitle, this.recorder.overrides,
+    );
   }
 
   stopPlayback(): void {
@@ -1474,11 +1522,47 @@ export class WocScene {
     this.onSceneSubtitle?.(null);
   }
 
+  // ── Pause / resume episode recording ─────────────────────────────────────────
+
+  pauseEpisodeRecord(): void {
+    this.recorder.pause();
+    this.scenePlayer?.pause();
+  }
+
+  resumeEpisodeRecord(): void {
+    this.recorder.resume();
+    this.scenePlayer?.resume();
+  }
+
+  get isEpisodePaused(): boolean { return this.recorder.isPaused; }
+
+  // ── Pause / resume playback (for post-prod camera editing) ────────────────────
+
+  pausePlayback(): void  { this.playback?.pause(); }
+  resumePlayback(): void { this.playback?.resume(); }
+
+  get isPlaybackPaused(): boolean { return this.playback?.isPaused ?? false; }
+  get playbackTime(): number      { return this.playback?.currentTime ?? 0; }
+
+  // ── Post-production camera overrides ─────────────────────────────────────────
+
+  // Pin current camera angle as a keyframe at playback's current time.
+  pinCameraOverride(): CamOverride | null {
+    if (!this.playback) return null;
+    const t = this.playback.currentTime;
+    this.recorder.addOverride(t, this.camYaw, this.camPitch, this.camDist);
+    return {t, yaw: this.camYaw, pitch: this.camPitch, dist: this.camDist};
+  }
+
+  removeOverrideNear(t: number): void { this.recorder.removeOverrideNear(t); }
+  clearOverrides():              void { this.recorder.clearOverrides(); }
+  get camOverrides(): CamOverride[]   { return this.recorder.overrides; }
+
   exportRecording(): string { return this.recorder.toJSON(); }
 
-  get isRecording():  boolean { return this.recorder.isRecording; }
-  get hasRecording(): boolean { return this.recorder.hasFrames; }
-  get recordingDuration(): number { return this.recorder.duration; }
+  get isRecording():       boolean { return this.recorder.isRecording; }
+  get hasRecording():      boolean { return this.recorder.hasFrames; }
+  get recordingDuration(): number  { return this.recorder.duration; }
   get isPlayingBack(): boolean { return this.playback !== null && !this.playback.done; }
 
   private getRecordState(): RecordState {

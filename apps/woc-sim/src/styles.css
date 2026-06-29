@@ -497,6 +497,48 @@ body { background: #040810; }
   box-shadow: 0 0 14px rgba(255,100,20,0.3);
 }
 
+/* Pause active state */
+.hud-action-btn.pause-active {
+  background: rgba(255,200,60,0.15);
+  border-color: rgba(255,220,80,0.5);
+  color: #ffdd55;
+  box-shadow: 0 0 12px rgba(255,200,60,0.25);
+}
+
+/* Pin camera button */
+.hud-action-btn.pin-btn {
+  background: rgba(120,200,255,0.12);
+  border-color: rgba(140,210,255,0.4);
+  color: #88ccff;
+}
+.hud-action-btn.pin-btn:hover {
+  background: rgba(120,200,255,0.22);
+  box-shadow: 0 0 12px rgba(120,200,255,0.3);
+}
+
+/* Paused banner — shown below buttons during pause states */
+.paused-banner {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font: 600 0.68rem/1.4 'DM Mono', monospace;
+  letter-spacing: 0.06em;
+  background: rgba(255,200,60,0.10);
+  border: 1px solid rgba(255,220,80,0.35);
+  color: #ffdd88;
+  text-align: center;
+  animation: paused-fade 2s ease-in-out infinite alternate;
+}
+.paused-banner.pin-mode {
+  background: rgba(120,200,255,0.10);
+  border-color: rgba(140,210,255,0.35);
+  color: #aaddff;
+}
+@keyframes paused-fade {
+  from { opacity: 0.7; }
+  to   { opacity: 1.0; }
+}
+
 /* Play Scene button */
 .play-scene-btn {
   font: 700 0.75rem/1 'DM Mono', monospace;

@@ -503,6 +503,9 @@ function App(): React.JSX.Element {
   const [recTime, setRecTime] = useState(0);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [episodeRecording, setEpisodeRecording] = useState(false);
+  const [episodePaused, setEpisodePaused] = useState(false);
+  const [playbackPaused, setPlaybackPaused] = useState(false);
+  const [camOverrides, setCamOverrides] = useState<{t: number}[]>([]);
   // NPC / portal / director state
   const [nearestNpc, setNearestNpc] = useState<EpisodeNpc | null>(null);
   const [dialogueLine, setDialogueLine] = useState<DialogueLine | null>(null);
@@ -716,6 +719,47 @@ function App(): React.JSX.Element {
     );
   }, [episodeRecording]);
 
+  const handlePauseEpisode = useCallback(() => {
+    if (!sceneRef.current) return;
+    if (episodePaused) {
+      sceneRef.current.resumeEpisodeRecord();
+      setEpisodePaused(false);
+      // Resume timer
+      recTimerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
+    } else {
+      sceneRef.current.pauseEpisodeRecord();
+      setEpisodePaused(true);
+      if (recTimerRef.current) clearInterval(recTimerRef.current);
+    }
+  }, [episodePaused]);
+
+  const handlePausePlayback = useCallback(() => {
+    if (!sceneRef.current) return;
+    if (playbackPaused) {
+      sceneRef.current.resumePlayback();
+      setPlaybackPaused(false);
+    } else {
+      sceneRef.current.pausePlayback();
+      setPlaybackPaused(true);
+    }
+  }, [playbackPaused]);
+
+  const handlePinCamera = useCallback(() => {
+    if (!sceneRef.current) return;
+    const ov = sceneRef.current.pinCameraOverride();
+    if (ov) setCamOverrides(sceneRef.current.camOverrides.map(o => ({t: o.t})));
+  }, []);
+
+  const handleRemoveOverride = useCallback((t: number) => {
+    sceneRef.current?.removeOverrideNear(t);
+    setCamOverrides(sceneRef.current?.camOverrides.map(o => ({t: o.t})) ?? []);
+  }, []);
+
+  const handleClearOverrides = useCallback(() => {
+    sceneRef.current?.clearOverrides();
+    setCamOverrides([]);
+  }, []);
+
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
     sceneRef.current?.setViewMode(next);
@@ -803,60 +847,114 @@ function App(): React.JSX.Element {
 
             {/* Action buttons row */}
             <div className="hud-btn-row">
-              {/* Episode auto-play + record — primary action */}
-              {!playingBack && (
+              {/* ── EP001 Record ── */}
+              {!playingBack && !recording && (
                 <button
-                  className={`woc-btn hud-action-btn ${episodeRecording ? 'rec-active ep-rec-btn' : 'ep-rec-btn'}`}
+                  className={`woc-btn hud-action-btn ep-rec-btn ${episodeRecording && !episodePaused ? 'rec-active' : ''}`}
                   onClick={handlePlayEpisodeAndRecord}
-                  title={episodeRecording ? 'Stop episode recording' : 'Auto-play EP001 and record it (follow cam)'}
-                  disabled={recording && !episodeRecording}
+                  title={episodeRecording ? 'Stop episode recording' : 'Auto-play EP001 and record (follow cam + trackpad)'}
+                  disabled={false}
                 >
                   {episodeRecording ? '⏹ Stop EP' : '● Record EP001'}
                 </button>
               )}
 
-              {/* Manual record */}
+              {/* ── Pause / Resume during EP REC ── */}
+              {episodeRecording && (
+                <button
+                  className={`woc-btn hud-action-btn ${episodePaused ? 'pause-active' : ''}`}
+                  onClick={handlePauseEpisode}
+                  title={episodePaused ? 'Resume — continues recording from here (cut point saved)' : 'Pause — adjust camera or reposition Autonate'}
+                >
+                  {episodePaused ? '▶ Resume' : '⏸ Pause'}
+                </button>
+              )}
+
+              {/* ── Manual record ── */}
               {!episodeRecording && !playingBack && (
                 <button
                   className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
                   onClick={handleToggleRecord}
-                  title={recording ? 'Stop recording (R)' : 'Start recording (R)'}
+                  title={recording ? 'Stop recording (R)' : 'Manual record (R)'}
                   disabled={sceneRunning}
                 >
                   {recording ? '⏹ Stop' : '⏺ Manual'}
                 </button>
               )}
 
-              {/* Replay / stop playback */}
+              {/* ── Replay controls ── */}
               {hasRecording && !recording && (
                 playingBack ? (
-                  <button className="woc-btn hud-action-btn" onClick={handleStopPlayback}>⏹ Stop</button>
+                  <>
+                    <button
+                      className={`woc-btn hud-action-btn ${playbackPaused ? 'pause-active' : ''}`}
+                      onClick={handlePausePlayback}
+                      title={playbackPaused ? 'Resume playback' : 'Pause — adjust camera, then pin it'}
+                    >
+                      {playbackPaused ? '▶ Resume' : '⏸ Pause'}
+                    </button>
+                    {playbackPaused && (
+                      <button
+                        className="woc-btn hud-action-btn pin-btn"
+                        onClick={handlePinCamera}
+                        title="Save current camera angle as override keyframe at this timestamp"
+                      >
+                        📍 Pin Camera
+                      </button>
+                    )}
+                    <button className="woc-btn hud-action-btn" onClick={handleStopPlayback}>⏹ Stop</button>
+                  </>
                 ) : (
                   <>
                     <button className="woc-btn hud-action-btn replay-btn" onClick={handlePlayback}>▶ Replay</button>
-                    <button className="woc-btn hud-action-btn export-btn" onClick={handleExportRecording} title="Export recording as JSON">↓ Export</button>
+                    {camOverrides.length > 0 && (
+                      <button
+                        className="woc-btn hud-action-btn"
+                        onClick={handleClearOverrides}
+                        title={`Clear ${camOverrides.length} camera override${camOverrides.length > 1 ? 's' : ''}`}
+                      >
+                        ✕ {camOverrides.length} pins
+                      </button>
+                    )}
+                    <button className="woc-btn hud-action-btn export-btn" onClick={handleExportRecording} title="Export with camera overrides applied">↓ Export</button>
                   </>
                 )
               )}
 
-              {/* Scripted scene preview (dev tool) */}
+              {/* ── Scene preview (dev) ── */}
               {!recording && !hasRecording && !episodeRecording && (
                 <button
                   className={`woc-btn hud-action-btn ${sceneRunning ? 'scene-active' : ''}`}
                   onClick={handlePlayScene}
-                  title={sceneRunning ? 'Stop scene' : 'Preview scripted scene (no record)'}
+                  title="Preview scripted scene (no record)"
                 >
                   {sceneRunning ? '⏹ Scene' : '▶ Preview'}
                 </button>
               )}
             </div>
 
-            {/* Controls hint — hide during recording so it doesn't distract */}
-            {!recording && !playingBack && (
+            {/* Paused episode banner */}
+            {episodePaused && (
+              <div className="paused-banner">
+                ⏸ PAUSED · drag trackpad to orbit · arrow keys to reposition Autonate · ▶ Resume when ready
+              </div>
+            )}
+
+            {/* Paused playback banner */}
+            {playbackPaused && (
+              <div className="paused-banner pin-mode">
+                ⏸ PAUSED · drag trackpad to set camera angle · 📍 Pin Camera to save · ▶ Resume
+              </div>
+            )}
+
+            {/* Controls hint */}
+            {!recording && !playingBack && !episodePaused && (
               <div className="human-hud-controls">
-                <span className="human-hud-key">↑ ↓ ← →</span> Move / Turn
+                <span className="human-hud-key">↑ ↓ ← →</span> Move
                 <span className="human-hud-divider">·</span>
-                <span className="human-hud-key">W A S D</span> Camera
+                <span className="human-hud-key">drag</span> Camera
+                <span className="human-hud-divider">·</span>
+                <span className="human-hud-key">scroll</span> Zoom
                 <span className="human-hud-divider">·</span>
                 <span className="human-hud-key">Space</span> Jump
                 <span className="human-hud-divider">·</span>
