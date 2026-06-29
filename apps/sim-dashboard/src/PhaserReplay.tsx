@@ -178,7 +178,7 @@ function placementForTime(row: AgentRow, timeInWeek: number): AgentPlacement {
     return hour >= Math.max(0, a.start - commute) && hour < Math.min(24, a.end + commute);
   });
   const home = {x: row.home_x, y: row.home_y};
-  if (!activity) return stationaryPlacement(row, 'home', true, home);
+  if (!activity) return stationaryPlacement(row, 'home', false, home);
 
   const buildingAnchor = {x: activity.destination_x ?? row.destination_x, y: activity.destination_y ?? row.destination_y};
   const route = routeForAgent(row, activity);
@@ -188,11 +188,11 @@ function placementForTime(row: AgentRow, timeInWeek: number): AgentPlacement {
   const arrivalHour = activity.start;
   const returnDepartureHour = activity.end;
 
-  if (hour < departureHour) return stationaryPlacement(row, 'home', true, home);
+  if (hour < departureHour) return stationaryPlacement(row, 'home', false, home);
   if (hour < arrivalHour) return placementOnRoute(row, route, totalDistance * ((hour - departureHour) / commuteHours), true, 'outbound', buildingAnchor);
-  if (hour < returnDepartureHour) return stationaryPlacement(row, 'onsite', true, buildingAnchor);
+  if (hour < returnDepartureHour) return stationaryPlacement(row, 'onsite', false, buildingAnchor);
   if (hour < returnDepartureHour + commuteHours) return placementOnRoute(row, route, totalDistance * (1 - (hour - returnDepartureHour) / commuteHours), false, 'inbound', buildingAnchor);
-  return stationaryPlacement(row, 'home', true, home);
+  return stationaryPlacement(row, 'home', false, home);
 }
 
 function withSegmentDistance(placement: AgentPlacement, segmentDistance: number): AgentPlacement {
@@ -256,6 +256,7 @@ class ReplayScene extends Phaser.Scene {
     private readonly cameraState: CameraState,
     private readonly onZoomChange: (zoom: number) => void,
     private readonly onAgentToggle: (agent: AgentRow, additive: boolean) => void,
+    private readonly onAgentProfile: (agent: AgentRow) => void,
     private readonly onClearFollow: () => void,
   ) {
     super('ReplayScene');
@@ -746,12 +747,13 @@ class ReplayScene extends Phaser.Scene {
       sprite.setInteractive(new Phaser.Geom.Rectangle(-14, -14, 28, 28), Phaser.Geom.Rectangle.Contains);
       sprite.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         if (pointer.getDistance() < 8) {
+          this.onAgentProfile(row);
           this.onAgentToggle(row, (pointer.event as MouseEvent).shiftKey);
           Sounds.playClick();
         }
       });
-      sprite.on('pointerover', () => { sprite.setScale(1.5); });
-      sprite.on('pointerout', () => { sprite.setScale(this.followedAgentIds.has(row.agent_id) ? 1.65 : 1.22); });
+      sprite.on('pointerover', () => { sprite.setScale(1.5); this.input.setDefaultCursor('pointer'); });
+      sprite.on('pointerout', () => { sprite.setScale(this.followedAgentIds.has(row.agent_id) ? 1.65 : 1.22); this.input.setDefaultCursor('grab'); });
       this.sprites.set(row.agent_id, sprite);
       this.agentRows.set(row.agent_id, row);
 
@@ -986,8 +988,9 @@ class ReplayScene extends Phaser.Scene {
       const row = this.agentRows.get(agentId);
       if (!sprite || !shadow) return;
       const previous = this.lastPlacements.get(agentId);
-      if (row && previous && previous.hidden !== placement.hidden) {
-        const anchor = placement.hidden ? placement.buildingAnchor : previous.buildingAnchor;
+      if (row && previous && previous.phase !== placement.phase) {
+        const arriving = placement.phase === 'onsite' || placement.phase === 'home';
+        const anchor = arriving ? placement.buildingAnchor : previous.buildingAnchor;
         const statusColor = palettes[this.theme].statuses[row.status];
         this.emitBuildingFlash(anchor, statusColor);
       }
@@ -1168,12 +1171,13 @@ class ReplayScene extends Phaser.Scene {
 // ─── REACT WRAPPER ────────────────────────────────────────────────────────────
 
 export function PhaserReplay({
-  run, week, day, hour, followedAgentIds, speedMultiplier, theme, zoom, onZoomChange, onAgentToggle, onClearFollow,
+  run, week, day, hour, followedAgentIds, speedMultiplier, theme, zoom, onZoomChange, onAgentToggle, onAgentProfile, onClearFollow,
 }: {
   run: DashboardRun; week: number; day: number; hour: number;
   followedAgentIds: string[]; speedMultiplier: number; theme: ThemeMode;
   zoom: number; onZoomChange: (z: number) => void;
   onAgentToggle: (agent: AgentRow, additive: boolean) => void;
+  onAgentProfile: (agent: AgentRow) => void;
   onClearFollow: () => void;
 }): React.JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -1189,7 +1193,7 @@ export function PhaserReplay({
     const fromRows = run.agentRows.filter((r) => r.week === fromWeek);
     const toRows = run.agentRows.filter((r) => r.week === week);
 
-    const scene = new ReplayScene(run, fromWeek, week, day, hour, fromRows, toRows, followedAgentIds, speedMultiplier, theme, zoom, cameraStateRef.current, onZoomChange, onAgentToggle, onClearFollow);
+    const scene = new ReplayScene(run, fromWeek, week, day, hour, fromRows, toRows, followedAgentIds, speedMultiplier, theme, zoom, cameraStateRef.current, onZoomChange, onAgentToggle, onAgentProfile, onClearFollow);
     sceneRef.current = scene;
     gameRef.current = new Phaser.Game({
       type: Phaser.CANVAS,
@@ -1205,7 +1209,7 @@ export function PhaserReplay({
     });
     prevStateRef.current = {runId: run.run_id, week};
     return () => { gameRef.current?.destroy(true); gameRef.current = null; sceneRef.current = null; };
-  }, [run, speedMultiplier, theme, onAgentToggle, onClearFollow, onZoomChange]);
+  }, [run, speedMultiplier, theme, onAgentToggle, onAgentProfile, onClearFollow, onZoomChange]);
 
   useEffect(() => {
     sceneRef.current?.updateReplay(week, day, hour, run.agentRows.filter((r) => r.week === week));

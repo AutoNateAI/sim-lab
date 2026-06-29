@@ -105,6 +105,96 @@ function parseBlockers(raw: string): string[] {
   try { return JSON.parse(raw) as string[]; } catch { return raw ? [raw] : []; }
 }
 
+// ─── AGENT PROFILE PANEL ─────────────────────────────────────────────────────
+
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function AgentProfilePanel({agent, day, onClose}: {agent: AgentRow; day: number; onClose: () => void}): React.JSX.Element {
+  const todayActivities = agent.daily_schedule.filter((a) => a.day === day);
+  const blockers = parseBlockers(agent.blockers);
+
+  const bars: {key: string; label: string; value: number}[] = [
+    {key: 'money', label: 'Money', value: agent.money_pressure},
+    {key: 'transport', label: 'Transit', value: agent.transportation_pressure},
+    {key: 'family', label: 'Family', value: agent.family_pressure},
+    {key: 'stress', label: 'Stress', value: agent.stress},
+    {key: 'energy', label: 'Energy', value: 1 - agent.energy},
+  ];
+
+  return (
+    <div className="agent-profile-panel" onClick={(e) => e.stopPropagation()}>
+      <div className="agent-profile-header">
+        <div>
+          <div className="agent-profile-id">{agent.agent_id.replace('resident_', 'R-')}</div>
+          <div className="agent-profile-meta">
+            {agent.resident_archetype.replaceAll('_', ' ')} · {agent.neighborhood_id.replaceAll('_', ' ')}
+          </div>
+        </div>
+        <div style={{display: 'flex', alignItems: 'flex-start', gap: 6}}>
+          <span className="follow-card-status" data-status={agent.status}>{STATUS_LABELS[agent.status]}</span>
+          <button type="button" className="profile-close-btn" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div className="agent-profile-body">
+        <div className="agent-profile-goals">
+          <div className="agent-profile-field">
+            <div className="agent-profile-label">Goal</div>
+            <div className="agent-profile-value">{agent.goal.replaceAll('_', ' ')}</div>
+          </div>
+          <div className="agent-profile-field">
+            <div className="agent-profile-label">Sub-goal</div>
+            <div className="agent-profile-value">{agent.current_subgoal.replaceAll('_', ' ')}</div>
+          </div>
+          {blockers.length > 0 && (
+            <div className="agent-profile-field">
+              <div className="agent-profile-label">Blockers</div>
+              <div className="agent-profile-value agent-profile-blockers">
+                {blockers.map((b) => b.replaceAll('_', ' ')).join(' · ')}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="agent-profile-bars">
+          {bars.map(({key, label, value}) => (
+            <div key={key} className="agent-profile-bar-row">
+              <span className="agent-profile-bar-label">{label}</span>
+              <div className="pressure-track" style={{flex: 1}}>
+                <div className={`pressure-fill ${key}`} style={{width: `${Math.round(value * 100)}%`}} />
+              </div>
+              <span className="agent-profile-bar-pct" style={{color: value > 0.7 ? 'var(--pink)' : value > 0.4 ? 'var(--amber)' : 'var(--green)'}}>
+                {Math.round(value * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {todayActivities.length > 0 && (
+          <div className="agent-profile-schedule">
+            <div className="agent-profile-label" style={{marginBottom: 5}}>Today — {DAY_NAMES[day] ?? 'Day'}</div>
+            {todayActivities.map((act, i) => {
+              const sh = Math.floor(act.start);
+              const sm = Math.round((act.start % 1) * 60);
+              const eh = Math.floor(act.end);
+              const em = Math.round((act.end % 1) * 60);
+              return (
+                <div key={i} className="agent-profile-activity">
+                  <span className="activity-time">{String(sh).padStart(2, '0')}:{String(sm).padStart(2, '0')}–{String(eh).padStart(2, '0')}:{String(em).padStart(2, '0')}</span>
+                  <span className="activity-kind">{act.kind.replaceAll('_', ' ')}</span>
+                  {act.destination_id && !act.at_home && (
+                    <span className="activity-dest">{act.destination_id.replaceAll('_', ' ')}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── PROGRAM CATALOG ─────────────────────────────────────────────────────────
 
 type Program = {
@@ -900,6 +990,7 @@ function Drawer({
   run, week, day, hour, onWeekChange, onOpenModal,
   followedAgents, zoom, onZoomChange, isPlaying, onTogglePlay,
   theme, onToggleTheme, soundOn, onToggleSound,
+  scrubMode, onScrubModeChange, onDayChange, onHourChange,
 }: {
   run: DashboardRun; week: number; day: number; hour: number;
   onWeekChange: (v: number) => void; onOpenModal: () => void;
@@ -907,6 +998,8 @@ function Drawer({
   isPlaying: boolean; onTogglePlay: () => void;
   theme: 'light' | 'dark'; onToggleTheme: () => void;
   soundOn: boolean; onToggleSound: () => void;
+  scrubMode: 'week' | 'day'; onScrubModeChange: (m: 'week' | 'day') => void;
+  onDayChange: (d: number) => void; onHourChange: (h: number) => void;
 }): React.JSX.Element {
   const [tab, setTab] = useState<DrawerTab>('simulation');
   const displayHour = Math.floor(hour);
@@ -988,19 +1081,51 @@ function Drawer({
 
             {/* Clock / Timeline */}
             <section className="drawer-panel timeline-panel">
-              <div className="drawer-label">City clock</div>
-              <div className="timeline-track">
-                <input type="range" min={0} max={maxWeek} value={week}
-                  onChange={(e) => { onWeekChange(Number(e.target.value)); Sounds.playWeekTick(); }} />
-                <div className="week-readout">
-                  <span>Wk 0</span>
-                  <strong>Week {week}</strong>
-                  <span>Wk {maxWeek}</span>
-                </div>
-                <div className="week-ticks">
-                  {Array.from({length: maxWeek + 1}, (_, i) => <div key={i} className="week-tick" style={{background: i === week ? 'var(--cyan)' : undefined}} />)}
+              <div className="scrub-mode-header">
+                <div className="drawer-label" style={{marginBottom: 0}}>City clock</div>
+                <div className="scrub-mode-toggle">
+                  <button type="button" className={scrubMode === 'week' ? 'scrub-mode-btn active' : 'scrub-mode-btn'}
+                    onClick={() => { onScrubModeChange('week'); Sounds.playClick(); }}>Week</button>
+                  <button type="button" className={scrubMode === 'day' ? 'scrub-mode-btn active' : 'scrub-mode-btn'}
+                    onClick={() => { onScrubModeChange('day'); Sounds.playClick(); }}>Day</button>
                 </div>
               </div>
+
+              {scrubMode === 'week' ? (
+                <div className="timeline-track">
+                  <input type="range" min={0} max={maxWeek} value={week}
+                    onChange={(e) => { onWeekChange(Number(e.target.value)); Sounds.playWeekTick(); }} />
+                  <div className="week-readout">
+                    <span>Wk 0</span>
+                    <strong>Week {week}</strong>
+                    <span>Wk {maxWeek}</span>
+                  </div>
+                  <div className="week-ticks">
+                    {Array.from({length: maxWeek + 1}, (_, i) => <div key={i} className="week-tick" style={{background: i === week ? 'var(--cyan)' : undefined}} />)}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="day-nav">
+                    {DAY_NAMES.map((name, d) => (
+                      <button key={d} type="button"
+                        className={d === day ? 'day-nav-btn active' : 'day-nav-btn'}
+                        onClick={() => { onDayChange(d); Sounds.playClick(); }}>
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="timeline-track">
+                    <input type="range" min={0} max={23.75} step={0.25} value={hour}
+                      onChange={(e) => { onHourChange(Number(e.target.value)); }} />
+                    <div className="week-readout">
+                      <span>00:00</span>
+                      <strong>{String(displayHour).padStart(2, '0')}:{String(displayMinute).padStart(2, '0')}</strong>
+                      <span>23:45</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Current week status bars */}
@@ -1196,6 +1321,8 @@ function App(): React.JSX.Element {
   const [followedAgentIds, setFollowedAgentIds] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [zoom, setZoom] = useState(0.32);
+  const [profiledAgent, setProfiledAgent] = useState<AgentRow | null>(null);
+  const [scrubMode, setScrubMode] = useState<'week' | 'day'>('week');
   const [theme, setTheme] = useState<'light' | 'dark'>(
     () => (localStorage.getItem('sim-theme') as 'light' | 'dark' | null) ?? 'dark',
   );
@@ -1241,6 +1368,31 @@ function App(): React.JSX.Element {
     Sounds.playClick();
   }, []);
 
+  const handleAgentProfile = useCallback((agent: AgentRow) => {
+    setProfiledAgent((cur) => (cur?.agent_id === agent.agent_id ? null : agent));
+  }, []);
+
+  const handleScrubModeChange = useCallback((mode: 'week' | 'day') => {
+    setScrubMode(mode);
+    if (mode === 'day') setIsPlaying(false);
+  }, []);
+
+  const handleDayChange = useCallback((newDay: number) => {
+    setClockMinute((cur) => {
+      const week = Math.min(Math.floor(cur / MINUTES_PER_WEEK), maxWeek);
+      const h = (cur % MINUTES_PER_DAY) / 60;
+      return week * MINUTES_PER_WEEK + newDay * MINUTES_PER_DAY + Math.round(h * 60 / CLOCK_STEP_MINUTES) * CLOCK_STEP_MINUTES;
+    });
+  }, [maxWeek]);
+
+  const handleHourChange = useCallback((newHour: number) => {
+    setClockMinute((cur) => {
+      const week = Math.min(Math.floor(cur / MINUTES_PER_WEEK), maxWeek);
+      const d = Math.floor((cur % MINUTES_PER_WEEK) / MINUTES_PER_DAY);
+      return week * MINUTES_PER_WEEK + d * MINUTES_PER_DAY + Math.round(newHour * 60 / CLOCK_STEP_MINUTES) * CLOCK_STEP_MINUTES;
+    });
+  }, [maxWeek]);
+
   const clearFollow = useCallback(() => setFollowedAgentIds([]), []);
 
   const selectRun = useCallback((run: DashboardRun) => {
@@ -1251,13 +1403,13 @@ function App(): React.JSX.Element {
   }, []);
 
   React.useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || scrubMode === 'day') return;
     const ms = clockIntervalMs(day, hour);
     const timer = window.setInterval(() => {
       setClockMinute((v) => (v >= maxWeek * MINUTES_PER_WEEK ? 0 : v + CLOCK_STEP_MINUTES));
     }, ms);
     return () => window.clearInterval(timer);
-  }, [isPlaying, maxWeek, selectedRun.run_id, day, hour]);
+  }, [isPlaying, scrubMode, maxWeek, selectedRun.run_id, day, hour]);
 
   return (
     <main className="board-shell">
@@ -1274,8 +1426,16 @@ function App(): React.JSX.Element {
           zoom={zoom}
           onZoomChange={setZoom}
           onAgentToggle={handleAgentToggle}
+          onAgentProfile={handleAgentProfile}
           onClearFollow={clearFollow}
         />
+        {profiledAgent && (
+          <AgentProfilePanel
+            agent={profiledAgent}
+            day={day}
+            onClose={() => setProfiledAgent(null)}
+          />
+        )}
       </section>
 
       <Drawer
@@ -1296,9 +1456,12 @@ function App(): React.JSX.Element {
         onToggleSound={() => {
           const next = !soundOn;
           setSoundOn(next);
-          // Wake AudioContext on the same gesture that unmutes — browser requires user interaction
           if (next) Sounds.ensureAudioReady();
         }}
+        scrubMode={scrubMode}
+        onScrubModeChange={handleScrubModeChange}
+        onDayChange={handleDayChange}
+        onHourChange={handleHourChange}
       />
 
       {modalOpen && (

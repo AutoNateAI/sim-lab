@@ -27,6 +27,9 @@
     "dashboard:build": "npm --prefix apps/sim-dashboard run build",
     "dashboard:preview": "npm --prefix apps/sim-dashboard run preview",
     "dashboard:check": "npm --prefix apps/sim-dashboard run check",
+    "woc-sim:dev": "npm --prefix apps/woc-sim run dev",
+    "woc-sim:build": "npm --prefix apps/woc-sim run build",
+    "woc-sim:check": "npm --prefix apps/woc-sim run check",
     "check": "npm run typecheck && npm run test:simulation && npm run mesa:check && npm run registry:check && npm run validate:simulations && npm run dashboard:check && npm run build"
   },
   "dependencies": {
