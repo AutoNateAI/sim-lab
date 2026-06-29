@@ -1196,17 +1196,23 @@ function App(): React.JSX.Element {
   const [followedAgentIds, setFollowedAgentIds] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [zoom, setZoom] = useState(0.32);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [soundOn, setSoundOn] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    () => (localStorage.getItem('sim-theme') as 'light' | 'dark' | null) ?? 'dark',
+  );
+  const [soundOn, setSoundOn] = useState(
+    () => localStorage.getItem('sim-sound') === 'on', // default OFF; persists once enabled
+  );
   const prevWeekRef = useRef(0);
 
   React.useEffect(() => {
     document.body.dataset.theme = theme;
+    localStorage.setItem('sim-theme', theme);
     return () => { delete document.body.dataset.theme; };
   }, [theme]);
 
   React.useEffect(() => {
     Sounds.setMuted(!soundOn);
+    localStorage.setItem('sim-sound', soundOn ? 'on' : 'off');
   }, [soundOn]);
 
   const selectedRun = dashboardRuns.find((r) => r.run_id === selectedRunId) ?? baseline;
