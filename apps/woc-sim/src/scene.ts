@@ -132,9 +132,9 @@ function grToWoc(grX: number, grY: number): {x: number; z: number} {
 
 // ─── AGENT DATA TYPES ─────────────────────────────────────────────────────────
 
-type AgentStatus = 'unaware' | 'aware' | 'training' | 'trained' | 'employed';
+export type AgentStatus = 'unaware' | 'aware' | 'training' | 'trained' | 'employed';
 
-type ScheduleActivity = {
+export type ScheduleActivity = {
   day: number;
   kind: string;
   start: number;
@@ -383,6 +383,11 @@ export class WocScene {
   private agents: AgentState[] = [];
   private onStats?: (s: SceneStats) => void;
   private animId = 0;
+  private elapsed = 0;
+
+  // Follow mode
+  private readonly followedIds = new Set<string>();
+  private readonly followArrows = new Map<string, THREE.Mesh>();
 
   constructor(canvas: HTMLCanvasElement) {
     this.loader = new GLTFLoader();
@@ -410,7 +415,10 @@ export class WocScene {
     this.controls.maxDistance = 400;
     this.controls.maxPolarAngle = Math.PI / 2.1;
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.07;
+    this.controls.dampingFactor = 0.08;
+    this.controls.zoomToCursor = true;      // zoom toward pointer, not orbit center
+    this.controls.screenSpacePanning = true; // pan moves in screen XY plane (more natural)
+    this.controls.zoomSpeed = 0.9;           // slightly gentler for trackpad
 
     this.buildWorld();
     this.modelsReady = this.preloadModels();
@@ -745,11 +753,70 @@ export class WocScene {
 
   // ─── RENDER LOOP ───────────────────────────────────────────────────────────
 
+  // ─── FOLLOW MODE ──────────────────────────────────────────────────────────
+
+  toggleFollow(id: string): boolean {
+    if (this.followedIds.has(id)) {
+      this.followedIds.delete(id);
+      const arrow = this.followArrows.get(id);
+      if (arrow) {this.scene.remove(arrow); this.followArrows.delete(id);}
+      return false;
+    }
+    this.followedIds.add(id);
+    const arrow = new THREE.Mesh(
+      new THREE.ConeGeometry(0.8, 2.5, 6),
+      new THREE.MeshStandardMaterial({
+        color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 3,
+        roughness: 0, transparent: true, opacity: 0.9, depthTest: false,
+      }),
+    );
+    // Tip points downward
+    arrow.rotation.x = Math.PI;
+    this.scene.add(arrow);
+    this.followArrows.set(id, arrow);
+    return true;
+  }
+
+  getFollowedIds(): ReadonlySet<string> {return this.followedIds;}
+
+  clearFollows(): void {
+    this.followArrows.forEach((m) => this.scene.remove(m));
+    this.followArrows.clear();
+    this.followedIds.clear();
+  }
+
+  // ─── RENDER LOOP ───────────────────────────────────────────────────────────
+
   private startLoop(): void {
     const tick = (): void => {
       const delta = this.clock.getDelta();
+      this.elapsed += delta;
       this.controls.update();
       this.characters.forEach(({mixer}) => mixer.update(delta));
+
+      // Update follow arrows: hover above agent head, slowly bob
+      this.followArrows.forEach((arrow, id) => {
+        const handle = this.characters.get(id);
+        if (!handle) return;
+        const p = handle.group.position;
+        arrow.position.set(p.x, p.y + 5 + Math.sin(this.elapsed * 3) * 0.4, p.z);
+      });
+
+      // Camera follow: softly lerp OrbitControls target toward centroid of followed agents
+      if (this.followedIds.size > 0) {
+        const pts: THREE.Vector3[] = [];
+        this.followedIds.forEach((id) => {
+          const h = this.characters.get(id);
+          if (h) pts.push(h.group.position);
+        });
+        if (pts.length > 0) {
+          const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+          const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+          const cz = pts.reduce((s, p) => s + p.z, 0) / pts.length;
+          this.controls.target.lerp(new THREE.Vector3(cx, cy, cz), delta * 2.5);
+        }
+      }
+
       this.renderer.render(this.scene, this.camera);
       this.animId = requestAnimationFrame(tick);
     };
@@ -759,6 +826,7 @@ export class WocScene {
   dispose(): void {
     cancelAnimationFrame(this.animId);
     this.clearCharacters();
+    this.clearFollows();
     this.controls.dispose();
     this.renderer.dispose();
   }
