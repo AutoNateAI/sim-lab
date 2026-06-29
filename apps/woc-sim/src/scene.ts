@@ -5,6 +5,7 @@ import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
 import {ScenePlayer, DAY_ONE_SCENE, type SceneController, type SceneAct} from './scene_player';
+import {ProductionPlayer, type ProductionBeat, type ProductionController} from './production_player';
 import {RecordingSession, SessionPlayback, type RecordState, type CamOverride} from './recorder';
 import {type EpisodeNpc, type DialogueLine, INTERACTION_RADIUS} from './npcs';
 
@@ -468,6 +469,7 @@ export class WocScene {
 
   // Scene player — automated cinematic sequences
   private scenePlayer: ScenePlayer | null = null;
+  private productionPlayer: ProductionPlayer | null = null;
   private onSceneSubtitle: ((text: string | null) => void) | null = null;
 
   // NPC system
@@ -1127,6 +1129,18 @@ export class WocScene {
         // Paused playback: full human controls so user can reposition and adjust camera
         if (this.playback?.isPaused && this.autonate) this.updateHumanMode(delta);
         if (this.autonate) this.updateChaseCamera(delta, true);
+      } else if (this.productionPlayer) {
+        this.productionPlayer.update(delta);
+        this.npcHandles.forEach(({mixer}) => mixer.update(delta));
+        if (this.productionPlayer.done) {
+          this.productionPlayer = null;
+          this.onSceneSubtitle?.(null);
+          const cb = this.onSceneDone;
+          this.onSceneDone = null;
+          cb?.();
+        }
+        if (this.recorder.isPaused && this.autonate) this.updateHumanMode(delta);
+        if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.scenePlayer) {
         this.scenePlayer.update(delta);
         if (this.scenePlayer.done) {
@@ -1596,6 +1610,8 @@ export class WocScene {
   stopScene(): void {
     this.scenePlayer?.stop();
     this.scenePlayer = null;
+    this.productionPlayer?.stop();
+    this.productionPlayer = null;
     this.onSceneSubtitle?.(null);
     this.onSceneSubtitle = null;
     this.onSceneDone = null;
@@ -1671,6 +1687,220 @@ export class WocScene {
       setCamDist:  (v) => { this.camDist  = v; },
       getCamYaw:   ()  => this.camYaw,
     };
+  }
+
+  // ─── PRODUCTION BEAT SYSTEM ──────────────────────────────────────────────────
+  // Scene-by-scene production: each beat is a clean stage with only the cast
+  // present. Camera is solved automatically from character positions.
+
+  /** Show/hide all wandering sim agents (hide during beat recording). */
+  setAgentsVisible(visible: boolean): void {
+    this.characters.forEach(({group}) => { group.visible = visible; });
+  }
+
+  /** Show/hide a single NPC by id. */
+  setNpcVisible(npcId: string, visible: boolean): void {
+    const h = this.npcHandles.get(npcId);
+    if (h) h.group.visible = visible;
+  }
+
+  /** Play an animation clip on an NPC. */
+  playNpcClip(npcId: string, clipName: string, loop: boolean): void {
+    const handle = this.npcHandles.get(npcId);
+    if (!handle) return;
+    const template = this.gltfCache.get(handle.data.model);
+    if (!template) return;
+    handle.mixer.stopAllAction();
+    const clip = template.clips.find(c => c.name === clipName) ?? template.clips[0];
+    if (!clip) return;
+    const action = handle.mixer.clipAction(clip);
+    action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+    action.clampWhenFinished = !loop;
+    action.reset().play();
+  }
+
+  /**
+   * Set camera to frame a speaker in dialogue.
+   *
+   * speaker='autonate' → camera on NPC's side, Autonate face in frame
+   * speaker='npc'      → camera behind Autonate, NPC over-shoulder in frame
+   *
+   * Camera math:
+   *   angleToNpc = atan2(npc.x - aut.x, npc.z - aut.z)  (XZ plane, using sin/cos convention)
+   *   OTS-autonate: camYaw = angleToNpc          → camera toward NPC, looking back at Autonate
+   *   OTS-npc:      camYaw = angleToNpc + PI     → camera behind Autonate, NPC in background
+   *   dist is based on character separation so both stay in frame
+   */
+  setCamForSpeech(speaker: 'autonate' | 'npc', npcId: string): void {
+    const npcHandle = this.npcHandles.get(npcId);
+    if (!npcHandle) return;
+    const ap  = this.autonate?.root.position ?? new THREE.Vector3();
+    const np  = npcHandle.group.position;
+    const dx  = np.x - ap.x;
+    const dz  = np.z - ap.z;
+    const sep = Math.sqrt(dx * dx + dz * dz);
+    const angleToNpc = Math.atan2(dx, dz);
+
+    // Suppress follow-lock for scripted dialogue
+    this.followLocked = false;
+    this.followLockReleaseUntil = Date.now() + 120_000;
+
+    if (speaker === 'autonate') {
+      this.camYaw   = angleToNpc;
+      this.camPitch = 0.14;
+      this.camDist  = Math.max(2.5, sep * 0.5);
+    } else {
+      this.camYaw   = angleToNpc + Math.PI;
+      this.camPitch = 0.16;
+      this.camDist  = Math.max(4.0, sep * 0.8 + 1);
+    }
+  }
+
+  /** Profile two-shot: camera perpendicular to Autonate↔NPC axis, both visible. */
+  setCamTwoShot(npcId: string): void {
+    const npcHandle = this.npcHandles.get(npcId);
+    if (!npcHandle) return;
+    const ap  = this.autonate?.root.position ?? new THREE.Vector3();
+    const np  = npcHandle.group.position;
+    const dx  = np.x - ap.x;
+    const dz  = np.z - ap.z;
+    const sep = Math.sqrt(dx * dx + dz * dz);
+    const angleToNpc = Math.atan2(dx, dz);
+
+    this.followLocked = false;
+    this.followLockReleaseUntil = Date.now() + 120_000;
+
+    this.camYaw   = angleToNpc + Math.PI / 2;
+    this.camPitch = 0.22;
+    this.camDist  = sep * 0.75 + 4;
+  }
+
+  /** Wide establishing shot, pulls back from the current conversation area. */
+  setCamWide(npcId?: string): void {
+    if (npcId) {
+      const npcHandle = this.npcHandles.get(npcId);
+      if (npcHandle) {
+        const ap = this.autonate?.root.position ?? new THREE.Vector3();
+        const np = npcHandle.group.position;
+        const angleToNpc = Math.atan2(np.x - ap.x, np.z - ap.z);
+        this.camYaw = angleToNpc + Math.PI / 2;
+      }
+    }
+    this.followLocked = false;
+    this.followLockReleaseUntil = Date.now() + 120_000;
+    this.camPitch = 0.46;
+    this.camDist  = 18;
+  }
+
+  /** Stage a beat: position Autonate + cast NPCs, hide everything else. */
+  private loadProductionBeat(beat: ProductionBeat): void {
+    // Hide sim agents — clean stage
+    this.setAgentsVisible(false);
+
+    // Position Autonate
+    const autCast = beat.cast.find(m => m.id === 'autonate');
+    if (autCast) {
+      const y = terrainHeight(autCast.startX, autCast.startZ);
+      this.autonate?.setPosition(autCast.startX, y, autCast.startZ);
+      this.autonate?.setFacing(autCast.facing);
+      this.autonateFacing = autCast.facing;
+      this.smoothedCharY  = y;
+      this.snapHumanCamera();
+    }
+
+    // Show only beat cast NPCs, at their beat positions
+    const castIds = new Set(beat.cast.filter(m => m.id !== 'autonate').map(m => m.id));
+    this.npcHandles.forEach((handle, npcId) => {
+      if (castIds.has(npcId)) {
+        handle.group.visible = true;
+        const castMember = beat.cast.find(m => m.id === npcId);
+        if (castMember) {
+          const y = terrainHeight(castMember.startX, castMember.startZ);
+          handle.group.position.set(castMember.startX, y, castMember.startZ);
+          handle.group.rotation.y = castMember.facing;
+        }
+      } else {
+        handle.group.visible = false;
+      }
+    });
+  }
+
+  /** Build the ProductionController interface backed by this scene's state. */
+  private makeProductionController(): ProductionController {
+    return {
+      // Autonate
+      getPosition: () => {
+        const p = this.autonate?.root.position ?? new THREE.Vector3();
+        return {x: p.x, y: p.y, z: p.z};
+      },
+      getFacing:    () => this.autonateFacing,
+      setFacing:    (rad) => { this.autonateFacing = rad; this.autonate?.setFacing(rad); },
+      setPosition:  (x, y, z) => { this.autonate?.setPosition(x, y, z); },
+      terrainHeight: (x, z) => terrainHeight(x, z),
+      playClip:     (name, loop) => { this.autonate?.play(name, loop); this.autonateCurClip = name; },
+      setMouthOpen: (amp) => { this.autonate?.setMouthOpen(amp); },
+      setIsWalking: (b) => { this.autonateIsWalking = b; },
+      // NPC
+      getNpcPosition: (npcId) => {
+        const h = this.npcHandles.get(npcId);
+        if (!h) return null;
+        return {x: h.group.position.x, y: h.group.position.y, z: h.group.position.z};
+      },
+      playNpcClip:    (npcId, clip, loop) => this.playNpcClip(npcId, clip, loop),
+      setNpcMouthOpen: (npcId, amp) => {
+        const h = this.npcHandles.get(npcId);
+        if (!h) return;
+        h.group.traverse((obj) => {
+          if (!(obj instanceof THREE.Mesh) || !obj.morphTargetDictionary || !obj.morphTargetInfluences) return;
+          const idx = obj.morphTargetDictionary['jawOpen'] ?? obj.morphTargetDictionary['mouthOpen'];
+          if (idx !== undefined) obj.morphTargetInfluences[idx] = amp;
+        });
+      },
+      // Camera
+      setCamFollowLocked: (locked) => {
+        this.followLocked = locked;
+        if (!locked) this.followLockReleaseUntil = Date.now() + 120_000;
+      },
+      setCamForSpeech: (speaker, npcId) => this.setCamForSpeech(speaker, npcId),
+      setCamTwoShot:   (npcId) => this.setCamTwoShot(npcId),
+      setCamWide:      (npcId) => this.setCamWide(npcId),
+      emitSubtitle:    (text) => this.onSceneSubtitle?.(text ?? null),
+    };
+  }
+
+  /** Load the beat stage and begin recording. Press stop to end. */
+  recordProductionBeat(
+    beat: ProductionBeat,
+    onSubtitle: (text: string | null) => void,
+    onComplete: (duration: number) => void,
+  ): void {
+    this.stopScene();
+    this.stopPlayback();
+    this.recorder.stop();
+    if (this.viewMode !== 'human') this.setViewMode('human');
+
+    this.loadProductionBeat(beat);
+
+    this.camPitch = 0.32;
+    this.camDist  = 12;
+    this.followLocked = true;
+    this.onSceneSubtitle = onSubtitle;
+    this.onSceneDone = () => {
+      this.recorder.stop();
+      this.followLocked = false;
+      // Restore full scene visibility
+      this.setAgentsVisible(true);
+      this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
+      onComplete(this.recorder.duration);
+    };
+
+    this.recorder.start();
+    const ctrl = this.makeProductionController();
+    this.productionPlayer = new ProductionPlayer(ctrl, beat, onSubtitle);
+  }
+
+  get isProductionRecording(): boolean {
+    return this.productionPlayer !== null;
   }
 
   // ─── DEBUG / PLAYWRIGHT API ───────────────────────────────────────────────────

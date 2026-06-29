@@ -11,6 +11,7 @@
 //        the mundane. A few romantic undertones with Elara.
 
 import type {SceneAct} from '../scene_player';
+import type {ProductionBeat} from '../production_player';
 import type {EpisodeNpc} from '../npcs';
 
 // ─── NPC CAST ─────────────────────────────────────────────────────────────────
@@ -366,4 +367,190 @@ export const EP001_SCENE: SceneAct[] = [
   {kind: 'gesture', clip: 'Cheer', duration: 2.5},
   {kind: 'talk', text: "Contract one. In the bag."},
   {kind: 'walk_to', x: 4, z: 8, speed: 5},
+];
+
+// ─── PRODUCTION VERSION — scene-by-scene, auto camera ────────────────────────
+// Each beat is a self-contained unit: cast (who's here), plus scripted acts.
+// Press Record on a beat → camera math handles framing automatically.
+//
+// Camera conventions for speech acts:
+//   Autonate speaking → camera on NPC's side, framing Autonate's face (OTS on NPC)
+//   NPC speaking      → camera behind Autonate, NPC visible over his shoulder
+//
+// Cast positions are chosen so the camera-solved shots stay clear of:
+//   - Portal rings (x≈16, x≈22) — keep characters at x≥24 for market scenes
+//   - Tree geometry south of pavilion — characters at z≥-1 for Elara scenes
+
+export const EP001_PRODUCTION: ProductionBeat[] = [
+  // ─── BEAT 1: ARRIVE ─────────────────────────────────────────────────────────
+  // Autonate alone. Establish where we are. Monologue to camera.
+  {
+    id: 'arrive',
+    label: '01 · Arrival',
+    description: 'Open at hub. Autonate delivers opening monologue.',
+    cast: [
+      {id: 'autonate', startX: 4, startZ: 15, facing: Math.PI},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 4, z: 8, speed: 5},
+      {kind: 'face', angle: -Math.PI / 5},
+      {kind: 'gesture', clip: 'Spellcast_Raise', duration: 1.2},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Day one in Eastbrook Vale. I'm here to map the workforce and find my first consulting contract.",
+        clip: 'Spellcast_Raise'},
+      {kind: 'cam', mode: 'wide'},
+      {kind: 'wait', seconds: 1.5},
+    ],
+  },
+
+  // ─── BEAT 2: MEET ELARA ─────────────────────────────────────────────────────
+  // Two characters. Dialogue alternates speaker, camera auto-cuts each line.
+  {
+    id: 'meet_elara',
+    label: '03 · Meet Elara',
+    description: 'The Market Elder schools Autonate on the real nature of markets.',
+    cast: [
+      {id: 'autonate',  startX: 24, startZ: 6,   facing: Math.PI / 2},
+      {id: 'elara',     startX: 30, startZ: 6,   facing: -Math.PI / 2},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 27, z: 6, speed: 5},
+      {kind: 'cam', mode: 'two_shot', npcId: 'elara'},
+      {kind: 'wait', seconds: 0.5},
+      {kind: 'speech', speaker: 'elara', speakerName: 'Elara',
+        text: "You're not from here.", clip: 'Idle'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "That obvious?", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'elara', speakerName: 'Elara',
+        text: "Only travelers look at the market like it's a THING. Locals just see it as life.", clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "What do you see?"},
+      {kind: 'speech', speaker: 'elara', speakerName: 'Elara',
+        text: "Seventeen simultaneous negotiations. A supply chain held by three families and one bridge. Three price bubbles about to pop.", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "How long did it take you to see all that?", clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'elara', speakerName: 'Elara',
+        text: "About as long as it takes anyone to realize... the market doesn't actually exist."},
+    ],
+  },
+
+  // ─── BEAT 3: THEO ────────────────────────────────────────────────────────────
+  // Hardware vendor. Information asymmetry conversation.
+  {
+    id: 'theo',
+    label: '04 · Talk to Theo',
+    description: 'Hardware vendor reveals the market is actually a data problem.',
+    cast: [
+      {id: 'autonate', startX: 20, startZ: -1, facing: Math.PI / 2},
+      {id: 'theo',     startX: 26, startZ: -1, facing: -Math.PI / 2},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 23, z: -1, speed: 5},
+      {kind: 'cam', mode: 'two_shot', npcId: 'theo'},
+      {kind: 'wait', seconds: 0.4},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Good tools. What does it cost to buy from you versus the next vendor?", clip: 'Idle'},
+      {kind: 'speech', speaker: 'theo', speakerName: 'Theo',
+        text: "Depends on the day. I adjust prices seventeen times a day based on rumors.", clip: 'Idle'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "You're pricing by feel. What if you had real data? Actual demand curves?", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'theo', speakerName: 'Theo',
+        text: "I'd triple my margin inside a month. But data like that costs more than I make in a year.", clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Maybe not.", clip: 'Idle'},
+    ],
+  },
+
+  // ─── BEAT 4: MIN ─────────────────────────────────────────────────────────────
+  // Food vendor. Natural demand forecaster.
+  {
+    id: 'min',
+    label: '05 · Talk to Min',
+    description: 'Min understands scarcity better than any economist.',
+    cast: [
+      {id: 'autonate', startX: 40, startZ: -1, facing: -Math.PI / 2},
+      {id: 'min',      startX: 34, startZ: -1, facing: Math.PI / 2},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 37, z: -1, speed: 5},
+      {kind: 'cam', mode: 'two_shot', npcId: 'min'},
+      {kind: 'wait', seconds: 0.4},
+      {kind: 'speech', speaker: 'min', speakerName: 'Min',
+        text: "Last of the season's harvest. Price doubles next week. That's the market, friend.", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "You're using scarcity to drive the price up.", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'min', speakerName: 'Min',
+        text: "I'm RESPONDING to scarcity. I didn't end the season. But I can read it. That's the difference between knowing the market and just surviving it.", clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "That's demand forecasting. You're doing it by feel.", clip: 'Idle'},
+      {kind: 'speech', speaker: 'min', speakerName: 'Min',
+        text: "Call it whatever you like. My family ate through winter. Did yours?", clip: 'Idle'},
+    ],
+  },
+
+  // ─── BEAT 5: REVELATION ──────────────────────────────────────────────────────
+  // Return to Elara. The pattern becomes clear. Intimate close-up energy.
+  {
+    id: 'revelation',
+    label: '06 · The Revelation',
+    description: 'Elara confirms what Autonate has pieced together.',
+    cast: [
+      {id: 'autonate',         startX: 24, startZ: 6, facing: Math.PI / 2},
+      {id: 'elara_revelation', startX: 30, startZ: 6, facing: -Math.PI / 2},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 27, z: 6, speed: 5},
+      {kind: 'cam', mode: 'two_shot', npcId: 'elara_revelation'},
+      {kind: 'wait', seconds: 0.5},
+      {kind: 'speech', speaker: 'elara_revelation', speakerName: 'Elara',
+        text: "So. What did you learn out there?", clip: 'Idle'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Every person in that market is making rational decisions based on incomplete information. The result is... chaotic order.", clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'elara_revelation', speakerName: 'Elara',
+        text: "Now you're ready to be dangerous.", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "How so?", clip: 'Idle'},
+      {kind: 'speech', speaker: 'elara_revelation', speakerName: 'Elara',
+        text: "Because you can see the patterns. And if you can see the patterns, you can show OTHERS the patterns. That... is worth paying for.", clip: 'Spellcasting'},
+      {kind: 'gesture', clip: 'Cheer', duration: 1.8},
+    ],
+  },
+
+  // ─── BEAT 6: FIRST PITCH ─────────────────────────────────────────────────────
+  // Back to Theo. The close. Contract #1.
+  {
+    id: 'pitch',
+    label: '07 · First Pitch',
+    description: 'Autonate delivers his first consulting pitch. Contract #1 is on the line.',
+    cast: [
+      {id: 'autonate',  startX: 20, startZ: -1, facing: Math.PI / 2},
+      {id: 'theo_pitch', startX: 26, startZ: -1, facing: -Math.PI / 2},
+    ],
+    acts: [
+      {kind: 'cam', mode: 'follow'},
+      {kind: 'walk_to', x: 23, z: -1, speed: 5},
+      {kind: 'cam', mode: 'two_shot', npcId: 'theo_pitch'},
+      {kind: 'wait', seconds: 0.3},
+      {kind: 'gesture', clip: 'Spellcast_Raise', duration: 0.8},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Theo. What if I could tell you exactly when demand for tools peaks in this valley — and how to price differently for each type of buyer?",
+        clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'theo_pitch', speakerName: 'Theo',
+        text: "... You could do that?", clip: 'Idle'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "That's what I do. I map the invisible architecture that everyone operates inside but nobody can see. And then I help you USE it.",
+        clip: 'Spellcasting'},
+      {kind: 'speech', speaker: 'theo_pitch', speakerName: 'Theo',
+        text: "How much does that cost?", clip: 'Spellcast_Raise'},
+      {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
+        text: "Less than one missed season. Meet me at the inn tonight.", clip: 'Cheer'},
+      {kind: 'wait', seconds: 0.5},
+      {kind: 'gesture', clip: 'Cheer', duration: 2.2},
+    ],
+  },
 ];

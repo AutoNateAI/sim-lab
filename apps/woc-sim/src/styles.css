@@ -720,12 +720,23 @@ body { background: #040810; }
 .beat-label { font: 700 0.72rem/1 'DM Mono', monospace; color: #ffb800; margin-bottom: 3px; }
 .beat-desc  { font: 400 0.65rem/1.4 'Space Grotesk', sans-serif; color: rgba(255,255,255,0.55); }
 .beat-loc   { font: 500 0.58rem/1 'DM Mono', monospace; color: rgba(0,255,204,0.5); margin-top: 4px; }
-.beat-actions { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+.beat-actions { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
 .beat-jump-btn {
   padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,212,255,0.4);
   background: rgba(0,212,255,0.08); color: #00d4ff;
   font: 600 0.62rem/1 'DM Mono', monospace; cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.beat-jump-btn:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.beat-jump-btn:hover:not(:disabled) { background: rgba(0,212,255,0.2); border-color: #00d4ff; }
+.beat-jump-btn:disabled { opacity: 0.35; cursor: default; }
+.beat-record-btn {
+  padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,60,60,0.4);
+  background: rgba(255,60,60,0.08); color: #ff6060;
+  font: 600 0.62rem/1 'DM Mono', monospace; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.beat-record-btn:hover:not(:disabled) { background: rgba(255,60,60,0.22); border-color: #ff6060; }
+.beat-record-btn.active { background: rgba(255,60,60,0.3); border-color: #ff4040; color: #ff4040; animation: paused-fade 1.2s ease-in-out infinite; }
+.beat-record-btn:disabled { opacity: 0.30; cursor: default; }
 .beat-cam-hint { font: 400 0.58rem/1 'DM Mono', monospace; color: rgba(255,255,255,0.3); }
+.director-beat.recording { border-left: 2px solid rgba(255,60,60,0.6); padding-left: 6px; }

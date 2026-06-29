@@ -3,7 +3,8 @@ import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
 import type {ScheduleActivity} from './scene';
 import type {EpisodeNpc, DialogueLine} from './npcs';
-import {EP001_NPCS, EP001_BEATS, EP001_SCENE, EP001_SETUPS, type BeatSetup} from './episodes/ep001_the_market';
+import {EP001_NPCS, EP001_BEATS, EP001_SCENE, EP001_SETUPS, EP001_PRODUCTION, type BeatSetup} from './episodes/ep001_the_market';
+import type {ProductionBeat} from './production_player';
 import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import './styles.css';
 
@@ -766,6 +767,42 @@ function App(): React.JSX.Element {
     sceneRef.current?.jumpToSetup(setup);
   }, []);
 
+  const [productionBeatId, setProductionBeatId] = useState<string | null>(null);
+
+  const handleRecordProductionBeat = useCallback((beat: ProductionBeat) => {
+    if (!sceneRef.current) return;
+    if (productionBeatId === beat.id) {
+      // Stop early
+      sceneRef.current.stopScene();
+      sceneRef.current.stopRecording();
+      if (recTimerRef.current) clearInterval(recTimerRef.current);
+      setProductionBeatId(null);
+      setRecording(false);
+      setHasRecording(sceneRef.current.hasRecording);
+      setRecTime(0);
+      return;
+    }
+    setHasRecording(false);
+    setPlayingBack(false);
+    setRecTime(0);
+    setProductionBeatId(beat.id);
+    setRecording(true);
+    if (recTimerRef.current) clearInterval(recTimerRef.current);
+    recTimerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
+    sceneRef.current.recordProductionBeat(
+      beat,
+      (text) => setSubtitle(text),
+      (_duration) => {
+        if (recTimerRef.current) clearInterval(recTimerRef.current);
+        setProductionBeatId(null);
+        setRecording(false);
+        setHasRecording(true);
+        setRecTime(0);
+        setSubtitle(null);
+      },
+    );
+  }, [productionBeatId]);
+
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
     sceneRef.current?.setViewMode(next);
@@ -1012,8 +1049,10 @@ function App(): React.JSX.Element {
               {EP001_BEATS.map((beat) => {
                 const done = beatsDone.has(beat.id);
                 const setup = EP001_SETUPS.find(s => s.beatId === beat.id);
+                const prodBeat = EP001_PRODUCTION.find(b => b.id === beat.id);
+                const isRecordingThis = productionBeatId === beat.id;
                 return (
-                  <div key={beat.id} className={`director-beat ${done ? 'done' : ''}`}>
+                  <div key={beat.id} className={`director-beat ${done ? 'done' : ''} ${isRecordingThis ? 'recording' : ''}`}>
                     <button className="beat-check" onClick={() => setBeatsDone(prev => {
                       const next = new Set(prev);
                       done ? next.delete(beat.id) : next.add(beat.id);
@@ -1025,18 +1064,29 @@ function App(): React.JSX.Element {
                       <div className="beat-label">{beat.label}</div>
                       <div className="beat-desc">{beat.description}</div>
                       <div className="beat-loc">📍 {beat.location}</div>
-                      {setup && (
-                        <div className="beat-actions">
+                      <div className="beat-actions">
+                        {setup && (
                           <button
                             className="beat-jump-btn"
                             onClick={() => handleJumpToSetup(setup)}
                             title={`Teleport to ${beat.label} · ${setup.primary.desc}`}
+                            disabled={!!productionBeatId}
                           >
                             ↑ Jump
                           </button>
-                          <span className="beat-cam-hint">{setup.primary.desc}</span>
-                        </div>
-                      )}
+                        )}
+                        {prodBeat && (
+                          <button
+                            className={`beat-record-btn ${isRecordingThis ? 'active' : ''}`}
+                            onClick={() => handleRecordProductionBeat(prodBeat)}
+                            title={isRecordingThis ? 'Stop recording this beat' : 'Record this beat — auto camera, clean stage'}
+                            disabled={!!productionBeatId && !isRecordingThis}
+                          >
+                            {isRecordingThis ? '⏹ Stop' : '● Record'}
+                          </button>
+                        )}
+                        {setup && <span className="beat-cam-hint">{setup.primary.desc}</span>}
+                      </div>
                     </div>
                   </div>
                 );
