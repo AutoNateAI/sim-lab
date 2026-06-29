@@ -560,3 +560,97 @@ body { background: #040810; }
 .avatar-mouth-val {
   font: 500 0.62rem/1 'DM Mono', monospace; color: rgba(0,204,170,0.7); text-align: right;
 }
+
+/* ─── DIALOGUE OVERLAY ─── */
+.dialogue-overlay {
+  position: absolute; bottom: 160px; left: 50%; transform: translateX(-50%);
+  max-width: 680px; width: 90%; z-index: 30; pointer-events: none;
+  animation: subtitle-fadein 0.25s ease;
+}
+.dialogue-overlay.npc-line { --accent: #00d4ff; }
+.dialogue-overlay.autonate-line { --accent: #00CCAA; }
+.dialogue-speaker {
+  font: 700 0.65rem/1 'DM Mono', monospace;
+  color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 5px; padding-left: 4px;
+}
+.dialogue-text {
+  background: rgba(4,8,20,0.92); backdrop-filter: blur(12px);
+  border: 1px solid var(--accent, rgba(255,255,255,0.15));
+  border-left: 3px solid var(--accent, #00CCAA);
+  border-radius: 0 10px 10px 0; padding: 14px 22px;
+  font: 500 0.95rem/1.55 'Space Grotesk', sans-serif; color: #fff;
+}
+.dialogue-hint {
+  font: 500 0.58rem/1 'DM Mono', monospace; color: rgba(255,255,255,0.3);
+  text-align: right; margin-top: 5px; padding-right: 4px;
+}
+
+/* ─── PORTAL PROMPT ─── */
+.portal-prompt {
+  position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,255,204,0.12); border: 1px solid rgba(0,255,204,0.45);
+  border-radius: 8px; padding: 8px 20px;
+  font: 700 0.75rem/1 'DM Mono', monospace; color: #00FFCC;
+  letter-spacing: 0.1em; z-index: 25; pointer-events: none;
+  animation: subtitle-fadein 0.2s ease;
+  box-shadow: 0 0 20px rgba(0,255,204,0.2);
+}
+
+/* ─── NPC INTERACT PROMPT ─── */
+.interact-prompt {
+  position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: rgba(4,8,20,0.85); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px; padding: 8px 20px;
+  font: 400 0.75rem/1 'DM Mono', monospace; color: rgba(255,255,255,0.7);
+  z-index: 25; pointer-events: none;
+  animation: subtitle-fadein 0.2s ease;
+}
+.interact-key {
+  display: inline-block;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px; padding: 1px 8px; margin-right: 8px;
+  font-weight: 700; color: #fff;
+}
+
+/* ─── DIRECTOR PANEL ─── */
+.director-panel {
+  position: absolute; top: 64px; left: 20px; z-index: 22;
+  pointer-events: all;
+}
+.director-toggle {
+  background: rgba(4,8,20,0.88); border: 1px solid rgba(255,180,0,0.4);
+  border-radius: 8px; padding: 7px 14px;
+  font: 700 0.7rem/1 'DM Mono', monospace; color: #ffb800;
+  cursor: pointer; transition: all 0.15s;
+}
+.director-toggle:hover { background: rgba(255,180,0,0.1); box-shadow: 0 0 10px rgba(255,180,0,0.2); }
+.director-content {
+  margin-top: 8px; width: 300px;
+  background: rgba(4,8,20,0.94); backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,180,0,0.25); border-radius: 10px;
+  padding: 14px; max-height: calc(100vh - 120px); overflow-y: auto;
+}
+.director-title {
+  font: 700 0.7rem/1 'Orbitron', monospace; color: #ffb800;
+  letter-spacing: 0.08em; margin-bottom: 12px; border-bottom: 1px solid rgba(255,180,0,0.2);
+  padding-bottom: 8px;
+}
+.director-beat {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.director-beat.done .beat-label { text-decoration: line-through; opacity: 0.4; }
+.director-beat.done .beat-desc,
+.director-beat.done .beat-loc  { opacity: 0.3; }
+.beat-check {
+  background: transparent; border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%; width: 22px; height: 22px; flex-shrink: 0;
+  cursor: pointer; font-size: 0.65rem; color: #fff; line-height: 22px; text-align: center;
+  transition: all 0.15s;
+}
+.director-beat.done .beat-check { background: #ffb800; border-color: #ffb800; color: #040810; }
+.beat-info { flex: 1; }
+.beat-label { font: 700 0.72rem/1 'DM Mono', monospace; color: #ffb800; margin-bottom: 3px; }
+.beat-desc  { font: 400 0.65rem/1.4 'Space Grotesk', sans-serif; color: rgba(255,255,255,0.55); }
+.beat-loc   { font: 500 0.58rem/1 'DM Mono', monospace; color: rgba(0,255,204,0.5); margin-top: 4px; }

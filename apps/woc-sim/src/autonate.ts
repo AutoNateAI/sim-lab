@@ -13,13 +13,15 @@ import type {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 
-// Rich warm melanated skin — dark brown with subtle warmth
-const SKIN_COLOR    = new THREE.Color(0x3B1A0A);
-const SKIN_EMISSIVE = new THREE.Color(0x0D0705);
+// Warm caramel-brown skin — medium tone, features clearly readable
+const SKIN_COLOR    = new THREE.Color(0xA06030);
+// Emissive at 0.55 guarantees face visibility regardless of sun angle
+const SKIN_EMISSIVE = new THREE.Color(0x5A2C10);
+const SKIN_EMISSIVE_INTENSITY = 0.55;
 
 // Black-light / tech aesthetic — neon cyan-teal glow on clothing
 const GLOW_COLOR     = new THREE.Color(0x00CCAA);
-const GLOW_INTENSITY = 0.16;
+const GLOW_INTENSITY = 0.22;
 
 // Max jaw rotation for fully-open mouth (radians)
 const JAW_MAX_ROTATION = Math.PI / 6;
@@ -66,7 +68,8 @@ export class AutonateCharacter {
   // ─── LOAD ────────────────────────────────────────────────────────────────
 
   async load(loader: GLTFLoader, wocPublic: string): Promise<void> {
-    const gltf   = await loader.loadAsync(`${wocPublic}/models/chars/players/rogue.glb`);
+    // Barbarian rig — broader shoulders, muscular build, clearly masculine
+    const gltf   = await loader.loadAsync(`${wocPublic}/models/chars/players/barbarian.glb`);
     const model  = SkeletonUtils.clone(gltf.scene) as THREE.Group;
 
     // Apply dark skin + neon glow per mesh
@@ -79,13 +82,14 @@ export class AutonateCharacter {
       const mat    = src.clone() as THREE.MeshStandardMaterial;
 
       if (isSkin) {
-        // Deep melanated skin: drop atlas texture, use flat colour only
+        // Drop atlas texture so skin color is pure — no peach multiply-through
         mat.map = null;
         mat.color.copy(SKIN_COLOR);
         mat.emissive.copy(SKIN_EMISSIVE);
-        mat.emissiveIntensity = 1;
-        mat.roughness  = 0.82;
-        mat.metalness  = 0.05;
+        // High emissive intensity guarantees facial features are readable in any lighting
+        mat.emissiveIntensity = SKIN_EMISSIVE_INTENSITY;
+        mat.roughness  = 0.78;
+        mat.metalness  = 0.02;
         mat.needsUpdate = true;
       } else {
         // Clothing: keep original atlas colour, layer neon teal emissive

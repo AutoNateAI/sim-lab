@@ -6,6 +6,7 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
 import {ScenePlayer, DAY_ONE_SCENE, type SceneController} from './scene_player';
 import {RecordingSession, SessionPlayback, type RecordState} from './recorder';
+import {type EpisodeNpc, type DialogueLine, INTERACTION_RADIUS} from './npcs';
 
 // ─── WoC WORLD CONSTANTS (Zone 1 — Eastbrook Vale) ───────────────────────────
 
@@ -18,9 +19,12 @@ const CHARACTER_SCALE = 1.8; // yards — visible at typical orbit distance
 const HUB = {x: 0, z: 0, radius: 26};
 const LAKE = {x: -92, z: 88, radius: 30};
 
+const MARKET = {x: 30, z: 3};
+
 type Poi = {x: number; z: number; label: string; kind: 'hub' | 'camp' | 'poi' | 'danger'};
 const POIS: Poi[] = [
   {x: 0, z: 0, label: 'Eastbrook', kind: 'hub'},
+  {x: MARKET.x, z: MARKET.z, label: 'Crossroads Market', kind: 'hub'},
   {x: -2, z: 70, label: 'Wolf Run', kind: 'danger'},
   {x: 65, z: 0, label: 'Boar Meadow', kind: 'poi'},
   {x: -88, z: 82, label: 'Mirror Lake', kind: 'poi'},
@@ -33,7 +37,7 @@ const POIS: Poi[] = [
 
 const ROAD_LINES: Array<{x: number; z: number}[]> = [
   [{x: 0, z: 0}, {x: -2, z: 35}, {x: -2, z: 70}],
-  [{x: 0, z: 0}, {x: 32, z: 0}, {x: 65, z: 0}],
+  [{x: 0, z: 0}, {x: 16, z: 2}, {x: MARKET.x, z: MARKET.z}, {x: 65, z: 0}],
   [{x: 0, z: 0}, {x: 38, z: -38}, {x: 76, z: -76}],
   [{x: 0, z: 0}, {x: -44, z: 41}, {x: -88, z: 82}],
   [{x: 0, z: 0}, {x: -42, z: -32}, {x: -84, z: -64}],
@@ -458,12 +462,26 @@ export class WocScene {
       e.preventDefault();
       this.startJump();
     }
+    if (e.code === 'KeyE' && this.viewMode === 'human') this.onInteract();
   };
   private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
 
   // Scene player — automated cinematic sequences
   private scenePlayer: ScenePlayer | null = null;
   private onSceneSubtitle: ((text: string | null) => void) | null = null;
+
+  // NPC system
+  private npcHandles = new Map<string, {group: THREE.Group; mixer: THREE.AnimationMixer; data: EpisodeNpc}>();
+  private episodeNpcs: EpisodeNpc[] = [];
+  private onNearestNpc: ((npc: EpisodeNpc | null) => void) | null = null;
+  private onDialogueLine: ((line: DialogueLine | null) => void) | null = null;
+  private dialogueNpc: EpisodeNpc | null = null;
+  private dialogueLineIdx = -1;
+
+  // Portals — pairs of linked teleport rings
+  private portalMeshes: THREE.Mesh[] = [];
+  private onPortalPrompt: ((label: string | null) => void) | null = null;
+  private nearestPortalDest: {x: number; z: number; facing: number} | null = null;
 
   // Record / replay
   private readonly recorder = new RecordingSession();
@@ -669,6 +687,12 @@ export class WocScene {
 
     this.scene.add(hubGroup);
 
+    // ── Crossroads Market ─────────────────────────────────────────────────────
+    this.buildMarket();
+
+    // ── Portals ───────────────────────────────────────────────────────────────
+    this.buildPortals();
+
     // ── Scattered homes (agent neighborhoods) ─────────────────────────────────
     const homeRng = (n: number): number => hash2(Math.floor(n * 73), Math.floor(n * 41), WORLD_SEED + 11);
     for (let i = 0; i < 28; i++) {
@@ -749,6 +773,107 @@ export class WocScene {
       const sprite = makeLabelSprite(poi.label, poi.kind);
       sprite.position.set(poi.x, y + 16, poi.z);
       this.scene.add(sprite);
+    }
+  }
+
+  // ─── MARKET & WORLD PIECES ────────────────────────────────────────────────
+
+  private buildMarket(): void {
+    const mx = MARKET.x, mz = MARKET.z;
+    const my = terrainHeight(mx, mz);
+    const marketGroup = new THREE.Group();
+
+    const woodMat  = new THREE.MeshStandardMaterial({color: 0x7a5a30, roughness: 0.9});
+    const tarpMats = [
+      new THREE.MeshStandardMaterial({color: 0xcc4422, roughness: 0.85}),  // red
+      new THREE.MeshStandardMaterial({color: 0x226688, roughness: 0.85}),  // blue
+      new THREE.MeshStandardMaterial({color: 0x559933, roughness: 0.85}),  // green
+      new THREE.MeshStandardMaterial({color: 0xcc8822, roughness: 0.85}),  // gold
+    ];
+
+    // Master pavilion (Elara's spot)
+    const pavilion = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 8), woodMat);
+    pavilion.position.set(mx, my + 3, mz + 5);
+    pavilion.castShadow = true;
+    marketGroup.add(pavilion);
+    const pavRoof = new THREE.Mesh(new THREE.ConeGeometry(8, 4, 4),
+      new THREE.MeshStandardMaterial({color: 0x882020, roughness: 0.9}));
+    pavRoof.position.set(mx, my + 8, mz + 5);
+    pavRoof.rotation.y = Math.PI / 4;
+    marketGroup.add(pavRoof);
+    // Pavilion glow lanterns
+    marketGroup.add(Object.assign(new THREE.PointLight(0xffcc66, 8, 20),
+      {position: new THREE.Vector3(mx, my + 5, mz + 4)}));
+
+    // Vendor stalls — table + angled tarp
+    const stallDefs = [
+      {x: mx - 7, z: mz - 2, rot: 0,           tarp: 0},  // Theo's tools
+      {x: mx + 7, z: mz - 2, rot: Math.PI,      tarp: 1},  // Min's food
+      {x: mx - 7, z: mz + 10, rot: 0,           tarp: 2},  // Spice merchant
+      {x: mx + 7, z: mz + 10, rot: Math.PI,     tarp: 3},  // Cloth vendor
+    ];
+    for (const s of stallDefs) {
+      const sy = terrainHeight(s.x, s.z);
+      // Table
+      const table = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 3), woodMat);
+      table.position.set(s.x, sy + 1, s.z);
+      table.castShadow = true;
+      marketGroup.add(table);
+      // Tarp / awning
+      const tarp = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), tarpMats[s.tarp % tarpMats.length]!);
+      tarp.rotation.set(-0.3 + s.rot * 0.01, s.rot, 0);
+      tarp.position.set(s.x, sy + 3.8, s.z - 0.5);
+      tarp.receiveShadow = true;
+      marketGroup.add(tarp);
+      // Leg posts
+      for (const [ox, oz] of [[-2, -1.4], [2, -1.4], [-2, 1.4], [2, 1.4]]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3.5, 5), woodMat);
+        post.position.set(s.x + ox, sy + 1.75, s.z + oz);
+        marketGroup.add(post);
+      }
+    }
+
+    // Open fire pit in market centre
+    const pit = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.4, 8),
+      new THREE.MeshStandardMaterial({color: 0x444444, roughness: 1}));
+    pit.position.set(mx, my + 0.2, mz);
+    marketGroup.add(pit);
+    const fireLight = new THREE.PointLight(0xff6600, 12, 30);
+    fireLight.position.set(mx, my + 2, mz);
+    marketGroup.add(fireLight);
+
+    this.scene.add(marketGroup);
+  }
+
+  private buildPortals(): void {
+    // Portal pairs: [from, to]. Travelling through 'from' lands at 'to' and vice versa.
+    const pairs: Array<[
+      {x: number; z: number; label: string; facing: number},
+      {x: number; z: number; label: string; facing: number}
+    ]> = [
+      [
+        {x: 16, z: 1, label: 'Crossroads Market', facing: 0},   // hub side
+        {x: 22, z: 3, label: 'Eastbrook Hub',     facing: Math.PI}, // market side
+      ],
+    ];
+
+    const torusGeo  = new THREE.TorusGeometry(2.2, 0.28, 12, 40);
+    const portalMat = new THREE.MeshStandardMaterial({
+      color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 2.5,
+      roughness: 0, transparent: true, opacity: 0.88, depthTest: false,
+    });
+
+    for (const [a, b] of pairs) {
+      for (const [src, dst] of [[a, b], [b, a]] as const) {
+        const y = terrainHeight(src.x, src.z) + 2.5;
+        const ring = new THREE.Mesh(torusGeo, portalMat);
+        ring.position.set(src.x, y, src.z);
+        ring.renderOrder = 10;
+        // Store destination in userData for proximity lookup
+        ring.userData = {dest: dst};
+        this.scene.add(ring);
+        this.portalMeshes.push(ring);
+      }
     }
   }
 
@@ -915,6 +1040,7 @@ export class WocScene {
       this.elapsed += delta;
       this.controls.update();
       this.characters.forEach(({mixer}) => mixer.update(delta));
+      this.npcHandles.forEach(({mixer}) => mixer.update(delta));
 
       // Update follow arrows: hover above agent head, slowly bob
       this.followArrows.forEach((arrow, id) => {
@@ -940,6 +1066,15 @@ export class WocScene {
       }
 
       this.autonate?.update(delta);
+
+      // Animate portals + check proximity
+      for (const ring of this.portalMeshes) {
+        ring.rotation.y += delta * 0.9;
+        ring.rotation.x  = Math.sin(this.elapsed * 0.7) * 0.15;
+      }
+      if (this.autonate && this.viewMode === 'human') {
+        this.updateProximity();
+      }
 
       // Priority: playback > scenePlayer > manual control
       if (this.playback && !this.playback.done) {
@@ -1151,6 +1286,142 @@ export class WocScene {
 
   get autonateLoaded(): boolean {
     return this.autonate !== null;
+  }
+
+  // ─── PROXIMITY & INTERACTION ──────────────────────────────────────────────────
+
+  private updateProximity(): void {
+    const ap = this.autonate!.root.position;
+
+    // Portal proximity
+    let closestPortal: THREE.Mesh | null = null;
+    let closestPortalDist = 5.5;
+    for (const ring of this.portalMeshes) {
+      const dx = ap.x - ring.position.x, dz = ap.z - ring.position.z;
+      const d = Math.sqrt(dx * dx + dz * dz);
+      if (d < closestPortalDist) { closestPortalDist = d; closestPortal = ring; }
+    }
+    const dest = closestPortal ? (closestPortal.userData as {dest: {x: number; z: number; facing: number; label: string}}).dest : null;
+    if (dest !== this.nearestPortalDest) {
+      this.nearestPortalDest = dest ?? null;
+      this.onPortalPrompt?.(dest ? `E → ${dest.label}` : null);
+    }
+
+    // NPC proximity (only when not in dialogue)
+    if (!this.dialogueNpc) {
+      let closestNpc: EpisodeNpc | null = null;
+      let closestDist = INTERACTION_RADIUS;
+      for (const npc of this.episodeNpcs) {
+        const handle = this.npcHandles.get(npc.id);
+        if (!handle) continue;
+        const dx = ap.x - handle.group.position.x, dz = ap.z - handle.group.position.z;
+        const d = Math.sqrt(dx * dx + dz * dz);
+        if (d < closestDist) { closestDist = d; closestNpc = npc; }
+      }
+      this.onNearestNpc?.(closestNpc);
+    }
+  }
+
+  // ── E-key actions (portal + dialogue) ────────────────────────────────────────
+
+  /** Call when the user presses E in Human View. */
+  onInteract(): void {
+    // Portal teleport takes priority
+    if (this.nearestPortalDest) {
+      const d = this.nearestPortalDest;
+      const y = terrainHeight(d.x, d.z);
+      this.autonate?.setPosition(d.x, y, d.z);
+      this.autonate?.setFacing(d.facing);
+      this.autonateFacing = d.facing;
+      this.smoothedCharY = y;
+      this.snapHumanCamera();
+      return;
+    }
+
+    // NPC dialogue
+    if (this.dialogueNpc) {
+      this.advanceDialogue();
+    }
+  }
+
+  startDialogue(npc: EpisodeNpc): void {
+    this.dialogueNpc    = npc;
+    this.dialogueLineIdx = 0;
+    this.onNearestNpc?.(null);
+    this.emitDialogueLine();
+  }
+
+  private advanceDialogue(): void {
+    if (!this.dialogueNpc) return;
+    this.dialogueLineIdx++;
+    if (this.dialogueLineIdx >= this.dialogueNpc.dialogue.length) {
+      this.endDialogue();
+    } else {
+      this.emitDialogueLine();
+    }
+  }
+
+  private emitDialogueLine(): void {
+    const line = this.dialogueNpc?.dialogue[this.dialogueLineIdx];
+    if (!line) return;
+    this.onDialogueLine?.(line);
+    // Trigger character animations for this line
+    if (line.isAutonate) {
+      this.autonate?.play(line.autonateClip ?? 'Spellcast_Raise', false);
+    } else {
+      const handle = this.npcHandles.get(this.dialogueNpc!.id);
+      if (handle && line.npcClip) {
+        const clip = handle.mixer.getRoot();
+        void clip; // mixer action triggered via handle
+        const action = handle.mixer.existingAction(
+          (handle.mixer as unknown as {_actions: {_clip: THREE.AnimationClip}[]})
+            ._actions.find(a => a._clip.name === (line.npcClip ?? 'Idle'))?._clip
+            ?? new THREE.AnimationClip(line.npcClip ?? 'Idle', 0, [])
+        );
+        action?.reset().play();
+      }
+    }
+  }
+
+  endDialogue(): void {
+    this.dialogueNpc     = null;
+    this.dialogueLineIdx = -1;
+    this.onDialogueLine?.(null);
+    this.autonate?.play('Idle', true);
+  }
+
+  // ── NPC management ───────────────────────────────────────────────────────────
+
+  async setEpisodeNpcs(
+    npcs: EpisodeNpc[],
+    onNearest: (npc: EpisodeNpc | null) => void,
+    onLine:    (line: DialogueLine | null) => void,
+    onPortal:  (label: string | null) => void,
+  ): Promise<void> {
+    await this.modelsReady;
+    // Clear old NPCs
+    this.npcHandles.forEach(({group, mixer}) => { mixer.stopAllAction(); this.scene.remove(group); });
+    this.npcHandles.clear();
+    this.episodeNpcs    = npcs;
+    this.onNearestNpc   = onNearest;
+    this.onDialogueLine = onLine;
+    this.onPortalPrompt = onPortal;
+
+    for (const npc of npcs) {
+      const template = this.gltfCache.get(npc.model);
+      if (!template) { console.warn(`[npc] model not found: ${npc.model}`); continue; }
+      const group = SkeletonUtils.clone(template.scene) as THREE.Group;
+      group.scale.setScalar(CHARACTER_SCALE);
+      group.traverse((obj) => { if (obj instanceof THREE.Mesh) obj.castShadow = true; });
+      const y = terrainHeight(npc.x, npc.z);
+      group.position.set(npc.x, y, npc.z);
+      group.rotation.y = npc.facing;
+      this.scene.add(group);
+      const mixer = new THREE.AnimationMixer(group);
+      const idleClip = template.clips.find(c => c.name === 'Idle') ?? template.clips[0];
+      if (idleClip) mixer.clipAction(idleClip).play();
+      this.npcHandles.set(npc.id, {group, mixer, data: npc});
+    }
   }
 
   // ─── RECORD / REPLAY API ──────────────────────────────────────────────────────

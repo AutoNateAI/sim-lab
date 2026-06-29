@@ -2,6 +2,8 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
 import type {ScheduleActivity} from './scene';
+import type {EpisodeNpc, DialogueLine} from './npcs';
+import {EP001_NPCS, EP001_BEATS} from './episodes/ep001_the_market';
 import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import './styles.css';
 
@@ -500,6 +502,12 @@ function App(): React.JSX.Element {
   const [playingBack, setPlayingBack] = useState(false);
   const [recTime, setRecTime] = useState(0);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // NPC / portal / director state
+  const [nearestNpc, setNearestNpc] = useState<EpisodeNpc | null>(null);
+  const [dialogueLine, setDialogueLine] = useState<DialogueLine | null>(null);
+  const [portalPrompt, setPortalPrompt] = useState<string | null>(null);
+  const [directorOpen, setDirectorOpen] = useState(false);
+  const [beatsDone, setBeatsDone] = useState<Set<string>>(new Set());
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -512,13 +520,14 @@ function App(): React.JSX.Element {
 
   const trajectories = useMemo(() => buildTrajectories(), []);
 
-  // Build scene + load initial agents (handles StrictMode double-mount)
+  // Build scene + load agents + episode NPCs
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const scene = new WocScene(canvas);
     sceneRef.current = scene;
     void scene.setAgents(getWeekAgents(selectedWeekRef.current), setStats);
+    void scene.setEpisodeNpcs(EP001_NPCS, setNearestNpc, setDialogueLine, setPortalPrompt);
     return () => { scene.dispose(); sceneRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -808,9 +817,64 @@ function App(): React.JSX.Element {
       )}
 
       {/* Scene subtitle overlay */}
-      {subtitle && (
+      {subtitle && !dialogueLine && (
         <div className="scene-subtitle">
           <div className="scene-subtitle-inner">{subtitle}</div>
+        </div>
+      )}
+
+      {/* Dialogue overlay */}
+      {dialogueLine && (
+        <div className={`dialogue-overlay ${dialogueLine.isAutonate ? 'autonate-line' : 'npc-line'}`}>
+          <div className="dialogue-speaker">{dialogueLine.speaker}</div>
+          <div className="dialogue-text">"{dialogueLine.text}"</div>
+          <div className="dialogue-hint">E — continue</div>
+        </div>
+      )}
+
+      {/* Portal prompt */}
+      {isHuman && portalPrompt && !dialogueLine && (
+        <div className="portal-prompt">{portalPrompt}</div>
+      )}
+
+      {/* NPC interact prompt */}
+      {isHuman && nearestNpc && !dialogueLine && !portalPrompt && (
+        <div className="interact-prompt">
+          <span className="interact-key">E</span>
+          Talk to {nearestNpc.name} · <em>{nearestNpc.role}</em>
+        </div>
+      )}
+
+      {/* Director HUD — Episode 1 beat checklist */}
+      {isHuman && (
+        <div className={`director-panel ${directorOpen ? 'open' : ''}`}>
+          <button className="director-toggle" onClick={() => setDirectorOpen(v => !v)}>
+            {directorOpen ? '✕' : '🎬'} {directorOpen ? 'Close' : 'Director'}
+          </button>
+          {directorOpen && (
+            <div className="director-content">
+              <div className="director-title">EP001 · The Invisible Architecture</div>
+              {EP001_BEATS.map((beat) => {
+                const done = beatsDone.has(beat.id);
+                return (
+                  <div key={beat.id} className={`director-beat ${done ? 'done' : ''}`}>
+                    <button className="beat-check" onClick={() => setBeatsDone(prev => {
+                      const next = new Set(prev);
+                      done ? next.delete(beat.id) : next.add(beat.id);
+                      return next;
+                    })}>
+                      {done ? '✓' : '○'}
+                    </button>
+                    <div className="beat-info">
+                      <div className="beat-label">{beat.label}</div>
+                      <div className="beat-desc">{beat.description}</div>
+                      <div className="beat-loc">📍 {beat.location}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
