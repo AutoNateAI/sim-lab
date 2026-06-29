@@ -369,32 +369,45 @@ export const EP001_SCENE: SceneAct[] = [
   {kind: 'walk_to', x: 4, z: 8, speed: 5},
 ];
 
-// ─── PRODUCTION VERSION — scene-by-scene, auto camera ────────────────────────
-// Each beat is a self-contained unit: cast (who's here), plus scripted acts.
-// Press Record on a beat → camera math handles framing automatically.
+// ─── PRODUCTION SCENES — cleared board + ClaudeCraft assets ──────────────────
+// Each scene starts with a clean stage (world hidden). Only the cast characters
+// and the listed stage assets appear. Positions are chosen so camera math is
+// exact: we know every coordinate, so two-shot / OTS angles are deterministic.
 //
-// Camera conventions for speech acts:
-//   Autonate speaking → camera on NPC's side, framing Autonate's face (OTS on NPC)
-//   NPC speaking      → camera behind Autonate, NPC visible over his shoulder
+// Stage coordinate system (all scenes share the same world space):
+//   Characters face each other along X axis by convention (east ↔ west).
+//   Camera two-shot: perpendicular (along Z), south of the pair.
+//   "Vendor behind stall" = NPC at x+3 of stall center.
 //
-// Cast positions are chosen so the camera-solved shots stay clear of:
-//   - Portal rings (x≈16, x≈22) — keep characters at x≥24 for market scenes
-//   - Tree geometry south of pavilion — characters at z≥-1 for Elara scenes
+// Camera auto-cuts (see production_player.ts):
+//   speech(autonate) → OTS on NPC side, Autonate face in frame
+//   speech(npc)      → OTS behind Autonate, NPC over shoulder
+//   cam(two_shot)    → perpendicular profile, both visible
+//   cam(follow)      → chase cam behind Autonate (walk scenes)
 
 export const EP001_PRODUCTION: ProductionBeat[] = [
-  // ─── BEAT 1: ARRIVE ─────────────────────────────────────────────────────────
-  // Autonate alone. Establish where we are. Monologue to camera.
+
+  // ─── SCENE 1: ARRIVE ────────────────────────────────────────────────────────
+  // Clear stage. Two stone archway columns frame the entrance to the vale.
+  // A campfire at the side casts warm light. Autonate walks in and addresses camera.
+  // Stage: archway at origin (entrance gate framing), campfire to the left.
   {
     id: 'arrive',
     label: '01 · Arrival',
-    description: 'Open at hub. Autonate delivers opening monologue.',
+    description: 'Autonate walks through the gate into Eastbrook Vale. Opening monologue.',
+    stage: [
+      {kind: 'archway',  x:  0, z: 14, facing: 0},
+      {kind: 'campfire', x: -4, z:  8, facing: 0},
+      {kind: 'sign',     x:  3, z: 14, facing: -0.3},
+      {kind: 'barrel',   x:  2, z:  9, facing: 0},
+    ],
     cast: [
-      {id: 'autonate', startX: 4, startZ: 15, facing: Math.PI},
+      {id: 'autonate', startX: 0, startZ: 18, facing: Math.PI},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 4, z: 8, speed: 5},
-      {kind: 'face', angle: -Math.PI / 5},
+      {kind: 'walk_to', x: 0, z: 8, speed: 5},
+      {kind: 'face', angle: Math.PI * 0.15},
       {kind: 'gesture', clip: 'Spellcast_Raise', duration: 1.2},
       {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
         text: "Day one in Eastbrook Vale. I'm here to map the workforce and find my first consulting contract.",
@@ -404,19 +417,34 @@ export const EP001_PRODUCTION: ProductionBeat[] = [
     ],
   },
 
-  // ─── BEAT 2: MEET ELARA ─────────────────────────────────────────────────────
-  // Two characters. Dialogue alternates speaker, camera auto-cuts each line.
+  // ─── SCENE 2: MEET ELARA ────────────────────────────────────────────────────
+  // Two stone columns frame Elara's consultation space — a pavilion feel.
+  // A table between them (where she works). A campfire adds ambiance.
+  // Autonate approaches from the west, Elara stands east of the table.
+  //
+  // Coordinates:
+  //   Table at (3, 0, 0). Elara at (5.5, 0, 0) behind/beside table, facing west.
+  //   Autonate walks from (-6, 0, 0) to (-1, 0, 0), facing east.
+  //   Two-shot: angleToNpc = atan2(5.5-(-1), 0) = atan2(6.5,0) = PI/2
+  //   Camera perpendicular: camYaw = PI/2 + PI/2 = PI (camera to south, looking north)
   {
     id: 'meet_elara',
     label: '03 · Meet Elara',
     description: 'The Market Elder schools Autonate on the real nature of markets.',
+    stage: [
+      {kind: 'column',   x: 2,  z: -4, facing: 0},
+      {kind: 'column',   x: 2,  z:  4, facing: 0},
+      {kind: 'table',    x: 3,  z:  0, facing: Math.PI / 4},
+      {kind: 'campfire', x: -3, z:  3, facing: 0},
+      {kind: 'crate',    x:  7, z:  1, facing: 0.5},
+    ],
     cast: [
-      {id: 'autonate',  startX: 24, startZ: 6,   facing: Math.PI / 2},
-      {id: 'elara',     startX: 30, startZ: 6,   facing: -Math.PI / 2},
+      {id: 'autonate', startX: -6, startZ: 0, facing: Math.PI / 2},
+      {id: 'elara',    startX:  6, startZ: 0, facing: -Math.PI / 2},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 27, z: 6, speed: 5},
+      {kind: 'walk_to', x: -1, z: 0, speed: 5},
       {kind: 'cam', mode: 'two_shot', npcId: 'elara'},
       {kind: 'wait', seconds: 0.5},
       {kind: 'speech', speaker: 'elara', speakerName: 'Elara',
@@ -436,19 +464,31 @@ export const EP001_PRODUCTION: ProductionBeat[] = [
     ],
   },
 
-  // ─── BEAT 3: THEO ────────────────────────────────────────────────────────────
-  // Hardware vendor. Information asymmetry conversation.
+  // ─── SCENE 3: THEO ──────────────────────────────────────────────────────────
+  // Theo stands behind his stall. Barrels and crates give depth.
+  // Autonate walks up from the west and speaks across the stall counter.
+  //
+  // Coordinates:
+  //   Stall at (3, 0, 0), facing west — Theo stands east of it.
+  //   Theo at (6, 0, 0) facing west. Autonate walks to (0, 0, 0) facing east.
+  //   Sep = 6. Two-shot: camYaw = PI, camDist ≈ 8. Camera south, looking north.
   {
     id: 'theo',
     label: '04 · Talk to Theo',
-    description: 'Hardware vendor reveals the market is actually a data problem.',
+    description: 'Hardware vendor: the market is an information asymmetry problem.',
+    stage: [
+      {kind: 'stall',        x:  3,  z:  0, facing: Math.PI,     color: 0x226688},
+      {kind: 'barrel_stack', x:  7,  z: -2, facing: 0.3},
+      {kind: 'crate_stack',  x:  7,  z:  2, facing: -0.2},
+      {kind: 'barrel',       x: -2,  z:  2, facing: 0},
+    ],
     cast: [
-      {id: 'autonate', startX: 20, startZ: -1, facing: Math.PI / 2},
-      {id: 'theo',     startX: 26, startZ: -1, facing: -Math.PI / 2},
+      {id: 'autonate', startX: -5, startZ: 0, facing: Math.PI / 2},
+      {id: 'theo',     startX:  6, startZ: 0, facing: -Math.PI / 2},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 23, z: -1, speed: 5},
+      {kind: 'walk_to', x: 0, z: 0, speed: 5},
       {kind: 'cam', mode: 'two_shot', npcId: 'theo'},
       {kind: 'wait', seconds: 0.4},
       {kind: 'speech', speaker: 'autonate', speakerName: 'Autonate',
@@ -464,19 +504,32 @@ export const EP001_PRODUCTION: ProductionBeat[] = [
     ],
   },
 
-  // ─── BEAT 4: MIN ─────────────────────────────────────────────────────────────
-  // Food vendor. Natural demand forecaster.
+  // ─── SCENE 4: MIN ───────────────────────────────────────────────────────────
+  // Min has a food cart. Barrels of produce. Crate beside her.
+  // Different from Theo's stall — smaller, warmer, more personal.
+  //
+  // Coordinates:
+  //   Cart at (-2, 0, 0). Min at (-4, 0, 0) beside cart, facing east.
+  //   Autonate walks to (2, 0, 0) facing west.
+  //   Sep = 6. Two-shot same geometry as Theo scene.
   {
     id: 'min',
     label: '05 · Talk to Min',
     description: 'Min understands scarcity better than any economist.',
+    stage: [
+      {kind: 'cart',    x: -2,  z:  0, facing: Math.PI / 2,   color: 0xcc8822},
+      {kind: 'barrel',  x: -5,  z:  2, facing: 0},
+      {kind: 'barrel',  x: -5,  z: -1, facing: 0.4},
+      {kind: 'crate',   x:  4,  z:  2, facing: -0.3},
+      {kind: 'campfire',x:  4,  z: -3, facing: 0},
+    ],
     cast: [
-      {id: 'autonate', startX: 40, startZ: -1, facing: -Math.PI / 2},
-      {id: 'min',      startX: 34, startZ: -1, facing: Math.PI / 2},
+      {id: 'autonate', startX:  5, startZ: 0, facing: -Math.PI / 2},
+      {id: 'min',      startX: -5, startZ: 0, facing:  Math.PI / 2},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 37, z: -1, speed: 5},
+      {kind: 'walk_to', x: 1, z: 0, speed: 5},
       {kind: 'cam', mode: 'two_shot', npcId: 'min'},
       {kind: 'wait', seconds: 0.4},
       {kind: 'speech', speaker: 'min', speakerName: 'Min',
@@ -492,19 +545,27 @@ export const EP001_PRODUCTION: ProductionBeat[] = [
     ],
   },
 
-  // ─── BEAT 5: REVELATION ──────────────────────────────────────────────────────
-  // Return to Elara. The pattern becomes clear. Intimate close-up energy.
+  // ─── SCENE 5: REVELATION ────────────────────────────────────────────────────
+  // Back to Elara — same pavilion setup but tighter. Campfire more prominent.
+  // Intimate. This is the turning point of the episode.
+  // Same coordinate layout as meet_elara but characters closer together.
   {
     id: 'revelation',
     label: '06 · The Revelation',
-    description: 'Elara confirms what Autonate has pieced together.',
+    description: 'Elara confirms what Autonate has pieced together. The pattern is visible.',
+    stage: [
+      {kind: 'column',   x:  2, z: -4, facing: 0},
+      {kind: 'column',   x:  2, z:  4, facing: 0},
+      {kind: 'campfire', x: -2, z:  3, facing: 0},
+      {kind: 'bench',    x:  5, z: -3, facing: 0.5},
+    ],
     cast: [
-      {id: 'autonate',         startX: 24, startZ: 6, facing: Math.PI / 2},
-      {id: 'elara_revelation', startX: 30, startZ: 6, facing: -Math.PI / 2},
+      {id: 'autonate',         startX: -5, startZ: 0, facing: Math.PI / 2},
+      {id: 'elara_revelation', startX:  5, startZ: 0, facing: -Math.PI / 2},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 27, z: 6, speed: 5},
+      {kind: 'walk_to', x: -1, z: 0, speed: 5},
       {kind: 'cam', mode: 'two_shot', npcId: 'elara_revelation'},
       {kind: 'wait', seconds: 0.5},
       {kind: 'speech', speaker: 'elara_revelation', speakerName: 'Elara',
@@ -521,19 +582,25 @@ export const EP001_PRODUCTION: ProductionBeat[] = [
     ],
   },
 
-  // ─── BEAT 6: FIRST PITCH ─────────────────────────────────────────────────────
-  // Back to Theo. The close. Contract #1.
+  // ─── SCENE 6: FIRST PITCH ───────────────────────────────────────────────────
+  // Back to Theo's stall — but this time Autonate is the one presenting.
+  // Same stall props, Autonate enters with energy. The close.
   {
     id: 'pitch',
     label: '07 · First Pitch',
-    description: 'Autonate delivers his first consulting pitch. Contract #1 is on the line.',
+    description: 'Autonate delivers his first consulting pitch to Theo. Contract #1.',
+    stage: [
+      {kind: 'stall',        x:  3,  z:  0, facing: Math.PI, color: 0x226688},
+      {kind: 'barrel_stack', x:  7,  z: -2, facing: 0.3},
+      {kind: 'crate',        x:  7,  z:  2, facing: -0.2},
+    ],
     cast: [
-      {id: 'autonate',  startX: 20, startZ: -1, facing: Math.PI / 2},
-      {id: 'theo_pitch', startX: 26, startZ: -1, facing: -Math.PI / 2},
+      {id: 'autonate',   startX: -5, startZ: 0, facing: Math.PI / 2},
+      {id: 'theo_pitch', startX:  6, startZ: 0, facing: -Math.PI / 2},
     ],
     acts: [
       {kind: 'cam', mode: 'follow'},
-      {kind: 'walk_to', x: 23, z: -1, speed: 5},
+      {kind: 'walk_to', x: 0, z: 0, speed: 5},
       {kind: 'cam', mode: 'two_shot', npcId: 'theo_pitch'},
       {kind: 'wait', seconds: 0.3},
       {kind: 'gesture', clip: 'Spellcast_Raise', duration: 0.8},

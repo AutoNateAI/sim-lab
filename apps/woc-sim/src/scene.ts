@@ -6,6 +6,7 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
 import {ScenePlayer, DAY_ONE_SCENE, type SceneController, type SceneAct} from './scene_player';
 import {ProductionPlayer, type ProductionBeat, type ProductionController} from './production_player';
+import {buildAsset, type StageAssetDef} from './claudecraft';
 import {RecordingSession, SessionPlayback, type RecordState, type CamOverride} from './recorder';
 import {type EpisodeNpc, type DialogueLine, INTERACTION_RADIUS} from './npcs';
 
@@ -467,6 +468,12 @@ export class WocScene {
   };
   private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
 
+  // World geometry group — toggled off for clean stage mode
+  private readonly worldGroup = new THREE.Group();
+  private stageMode = false;
+  private stageAssets: THREE.Group[] = [];
+  private stageLights: THREE.PointLight[] = [];
+
   // Scene player — automated cinematic sequences
   private scenePlayer: ScenePlayer | null = null;
   private productionPlayer: ProductionPlayer | null = null;
@@ -727,13 +734,13 @@ export class WocScene {
     campfire.position.set(6, hubY + 2.5, 6);
     hubGroup.add(campfire);
 
-    this.scene.add(hubGroup);
+    this.worldGroup.add(hubGroup);
 
     // ── Crossroads Market ─────────────────────────────────────────────────────
-    this.buildMarket();
+    this.worldGroup.add(this.buildMarket());
 
     // ── Portals ───────────────────────────────────────────────────────────────
-    this.buildPortals();
+    this.worldGroup.add(this.buildPortals());
 
     // ── Scattered homes (agent neighborhoods) ─────────────────────────────────
     const homeRng = (n: number): number => hash2(Math.floor(n * 73), Math.floor(n * 41), WORLD_SEED + 11);
@@ -763,7 +770,7 @@ export class WocScene {
       );
       homeRoof.position.set(hx, hy + size * 0.7 + size * 0.25, hz);
       homeRoof.rotation.y = Math.PI / 4;
-      this.scene.add(home, homeRoof);
+      this.worldGroup.add(home, homeRoof);
     }
 
     // ── Trees ─────────────────────────────────────────────────────────────────
@@ -794,7 +801,7 @@ export class WocScene {
       treeInst.setMatrixAt(i, tm.makeTranslation(x, y + 4.5 * s + 2, z).scale(new THREE.Vector3(s, s, s)));
       trunkInst.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, y + 2, z).scale(new THREE.Vector3(s, s, s)));
     });
-    this.scene.add(treeInst, trunkInst);
+    this.worldGroup.add(treeInst, trunkInst);
 
     // ── POI billboards ────────────────────────────────────────────────────────
     const poiColors: Record<Poi['kind'], number> = {
@@ -810,17 +817,17 @@ export class WocScene {
         }),
       );
       marker.position.set(poi.x, y + 3, poi.z);
-      this.scene.add(marker);
-
       const sprite = makeLabelSprite(poi.label, poi.kind);
       sprite.position.set(poi.x, y + 16, poi.z);
-      this.scene.add(sprite);
+      this.worldGroup.add(marker, sprite);
     }
+
+    this.scene.add(this.worldGroup);
   }
 
   // ─── MARKET & WORLD PIECES ────────────────────────────────────────────────
 
-  private buildMarket(): void {
+  private buildMarket(): THREE.Group {
     const mx = MARKET.x, mz = MARKET.z;
     const my = terrainHeight(mx, mz);
     const marketGroup = new THREE.Group();
@@ -885,10 +892,11 @@ export class WocScene {
     fireLight.position.set(mx, my + 2, mz);
     marketGroup.add(fireLight);
 
-    this.scene.add(marketGroup);
+    return marketGroup;
   }
 
-  private buildPortals(): void {
+  private buildPortals(): THREE.Group {
+    const portalGroup = new THREE.Group();
     // Portal pairs: [from, to]. Travelling through 'from' lands at 'to' and vice versa.
     const pairs: Array<[
       {x: number; z: number; label: string; facing: number},
@@ -914,10 +922,11 @@ export class WocScene {
         ring.renderOrder = 10;
         // Store destination in userData for proximity lookup
         ring.userData = {dest: dst};
-        this.scene.add(ring);
+        portalGroup.add(ring);
         this.portalMeshes.push(ring);
       }
     }
+    return portalGroup;
   }
 
   // ─── CHARACTER MANAGEMENT ──────────────────────────────────────────────────
@@ -1616,6 +1625,9 @@ export class WocScene {
     this.onSceneSubtitle = null;
     this.onSceneDone = null;
     this.followLocked = false;
+    this.exitStageMode();
+    this.setAgentsVisible(true);
+    this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
   }
 
   get isPlayingScene(): boolean {
@@ -1793,8 +1805,53 @@ export class WocScene {
   }
 
   /** Stage a beat: position Autonate + cast NPCs, hide everything else. */
+  /** Enter stage mode: hide all world geometry, reveal a clean terrain floor. */
+  enterStageMode(): void {
+    if (this.stageMode) return;
+    this.worldGroup.visible = false;
+    this.stageMode = true;
+    // Stop portal proximity logic from firing on hidden portals
+    this.nearestPortalDest = null;
+    this.onPortalPrompt?.(null);
+  }
+
+  /** Exit stage mode: restore world geometry and clear all stage assets. */
+  exitStageMode(): void {
+    if (!this.stageMode) return;
+    this.worldGroup.visible = true;
+    this.stageMode = false;
+    this.clearStageAssets();
+  }
+
+  /** Remove all ClaudeCraft props from the current stage. */
+  clearStageAssets(): void {
+    for (const g of this.stageAssets) this.scene.remove(g);
+    for (const l of this.stageLights) this.scene.remove(l);
+    this.stageAssets = [];
+    this.stageLights = [];
+  }
+
+  /** Spawn a single ClaudeCraft prop on the stage. */
+  spawnStageAsset(def: StageAssetDef): void {
+    const floorY = terrainHeight(def.x, def.z);
+    const {group, light} = buildAsset(def, floorY);
+    this.scene.add(group);
+    this.stageAssets.push(group);
+    if (light) {
+      this.scene.add(light);
+      // Light is already inside the group, so no need to add separately
+      // but it's tracked for cleanup
+    }
+  }
+
   private loadProductionBeat(beat: ProductionBeat): void {
-    // Hide sim agents — clean stage
+    // Enter clean stage — world geometry off
+    this.enterStageMode();
+    this.clearStageAssets();
+    // Spawn only this scene's props
+    for (const assetDef of beat.stage) this.spawnStageAsset(assetDef);
+
+    // Hide sim agents
     this.setAgentsVisible(false);
 
     // Position Autonate
@@ -1888,7 +1945,8 @@ export class WocScene {
     this.onSceneDone = () => {
       this.recorder.stop();
       this.followLocked = false;
-      // Restore full scene visibility
+      // Restore full world
+      this.exitStageMode();
       this.setAgentsVisible(true);
       this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
       onComplete(this.recorder.duration);

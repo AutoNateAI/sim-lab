@@ -25,6 +25,8 @@ export type ProductionAct =
 
 // ─── BEAT DEFINITION ─────────────────────────────────────────────────────────
 
+import type {StageAssetDef} from './claudecraft';
+
 export type BeatCastMember = {
   id: 'autonate' | string; // 'autonate' or an EpisodeNpc id
   startX: number;
@@ -36,6 +38,8 @@ export type ProductionBeat = {
   id: string;
   label: string;
   description: string;
+  /** Props to spawn on the clean stage for this scene. Camera math uses these coordinates. */
+  stage: StageAssetDef[];
   cast: BeatCastMember[];
   acts: ProductionAct[];
 };
