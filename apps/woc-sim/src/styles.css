@@ -356,6 +356,62 @@ body { background: #040810; }
 .hour-cell.kind-activity { background: rgba(100,200,255,0.12); border-color: rgba(100,200,255,0.18); }
 .hour-cell.kind-activity .hour-label { color: #64c8ff; }
 
+/* ─── VIEW TOGGLE ─── */
+.view-toggle-btn {
+  background: rgba(0,204,170,0.08) !important;
+  border-color: rgba(0,204,170,0.35) !important;
+  color: #00CCAA !important;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.view-toggle-btn:hover {
+  background: rgba(0,204,170,0.2) !important;
+  border-color: #00CCAA !important;
+}
+.view-toggle-btn.human-active {
+  background: rgba(0,204,170,0.25) !important;
+  border-color: #00FFCC !important;
+  color: #00FFCC !important;
+  box-shadow: 0 0 12px rgba(0,255,204,0.4);
+}
+
+/* ─── HUMAN VIEW HUD ─── */
+.human-hud {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  pointer-events: none; z-index: 20;
+}
+.human-hud-mission {
+  background: rgba(4,8,20,0.88); backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,204,170,0.3); border-radius: 12px;
+  padding: 12px 20px; text-align: center; min-width: 260px;
+}
+.human-hud-label {
+  font: 500 0.58rem/1 'DM Mono', monospace; color: rgba(0,204,170,0.6);
+  text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px;
+}
+.human-hud-objective {
+  font: 600 0.8rem/1.2 'Space Grotesk', sans-serif; color: #e8f4ff; margin-bottom: 8px;
+}
+.human-hud-progress { display: flex; align-items: center; gap: 8px; justify-content: center; }
+.human-hud-pips { display: flex; gap: 5px; }
+.human-hud-pip {
+  width: 18px; height: 8px; border-radius: 4px;
+  border: 1px solid rgba(0,204,170,0.4); background: rgba(0,204,170,0.08);
+}
+.human-hud-pip.filled { background: #00CCAA; border-color: #00FFCC; box-shadow: 0 0 6px #00CCAA; }
+.human-hud-count { font: 700 0.7rem/1 'DM Mono', monospace; color: #00CCAA; }
+.human-hud-controls {
+  font: 400 0.65rem/1 'DM Mono', monospace; color: rgba(255,255,255,0.45);
+  display: flex; align-items: center; gap: 6px;
+}
+.human-hud-key {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px; padding: 2px 7px; font-weight: 600;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.08em;
+}
+.human-hud-divider { opacity: 0.35; }
+
 /* ─── AVATAR PANEL ─── */
 .avatar-panel {
   position: absolute; top: 64px; right: 20px; width: 220px;

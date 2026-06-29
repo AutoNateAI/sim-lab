@@ -433,6 +433,16 @@ export class WocScene {
   private autonate: AutonateCharacter | null = null;
   private autonateReady: Promise<void> = Promise.resolve();
 
+  // View mode
+  private viewMode: 'spirit' | 'human' = 'spirit';
+  private keys = new Set<string>();
+  private autonateFacing = -Math.PI / 6;  // matches initial setFacing in loadAutonate
+  private autonateIsWalking = false;
+  private spiritCamPos = new THREE.Vector3(0, 120, -180);
+  private spiritCamTarget = new THREE.Vector3(0, 2, 0);
+  private onKeyDown = (e: KeyboardEvent): void => { this.keys.add(e.code); };
+  private onKeyUp   = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
+
   // Follow mode
   private readonly followedIds = new Set<string>();
   private readonly followArrows = new Map<string, THREE.Mesh>();
@@ -467,6 +477,9 @@ export class WocScene {
     this.controls.zoomToCursor = true;      // zoom toward pointer, not orbit center
     this.controls.screenSpacePanning = true; // pan moves in screen XY plane (more natural)
     this.controls.zoomSpeed = 0.9;           // slightly gentler for trackpad
+
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
 
     this.buildWorld();
     this.modelsReady = this.preloadModels();
@@ -884,6 +897,7 @@ export class WocScene {
       }
 
       this.autonate?.update(delta);
+      if (this.viewMode === 'human') this.updateHumanMode(delta);
 
       this.renderer.render(this.scene, this.camera);
       this.animId = requestAnimationFrame(tick);
@@ -895,11 +909,113 @@ export class WocScene {
     cancelAnimationFrame(this.animId);
     this.clearCharacters();
     this.clearFollows();
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     this.controls.dispose();
     this.renderer.dispose();
   }
 
   getStatusLabels(): typeof STATUS_LABELS {return STATUS_LABELS;}
+
+  // ─── VIEW MODE ────────────────────────────────────────────────────────────
+
+  setViewMode(mode: 'spirit' | 'human'): void {
+    if (this.viewMode === mode) return;
+    this.viewMode = mode;
+
+    if (mode === 'human') {
+      // Save current spirit-view camera so we can restore it
+      this.spiritCamPos.copy(this.camera.position);
+      this.spiritCamTarget.copy(this.controls.target);
+      this.controls.enabled = false;
+
+      // Snap camera immediately behind Autonate if loaded
+      if (this.autonate) {
+        this.snapHumanCamera();
+      }
+    } else {
+      // Return to spirit view
+      this.controls.enabled = true;
+      this.camera.position.copy(this.spiritCamPos);
+      this.controls.target.copy(this.spiritCamTarget);
+      this.controls.update();
+
+      // Return Autonate to idle
+      if (this.autonate) {
+        this.autonate.play('Idle', true);
+        this.autonateIsWalking = false;
+      }
+    }
+  }
+
+  getViewMode(): 'spirit' | 'human' { return this.viewMode; }
+
+  private snapHumanCamera(): void {
+    if (!this.autonate) return;
+    const pos = this.autonate.root.position;
+    const f   = this.autonateFacing;
+    this.camera.position.set(
+      pos.x - Math.sin(f) * 10,
+      pos.y + 5,
+      pos.z - Math.cos(f) * 10,
+    );
+    this.camera.lookAt(pos.x, pos.y + 1.5, pos.z);
+  }
+
+  private updateHumanMode(dt: number): void {
+    if (!this.autonate) return;
+
+    const MOVE_SPEED = 7;    // world units / sec
+    const TURN_SPEED = 2.4;  // radians / sec
+    const CAM_DIST   = 10;
+    const CAM_HEIGHT = 5;
+
+    const left  = this.keys.has('KeyA') || this.keys.has('ArrowLeft');
+    const right = this.keys.has('KeyD') || this.keys.has('ArrowRight');
+    const fwd   = this.keys.has('KeyW') || this.keys.has('ArrowUp');
+    const back  = this.keys.has('KeyS') || this.keys.has('ArrowDown');
+
+    if (left)  this.autonateFacing += TURN_SPEED * dt;
+    if (right) this.autonateFacing -= TURN_SPEED * dt;
+
+    let moving = false;
+    const dx = Math.sin(this.autonateFacing);
+    const dz = Math.cos(this.autonateFacing);
+    const cur = this.autonate.root.position;
+
+    if (fwd || back) {
+      const dir = fwd ? 1 : -1;
+      const nx  = cur.x + dx * MOVE_SPEED * dt * dir;
+      const nz  = cur.z + dz * MOVE_SPEED * dt * dir;
+      const ny  = terrainHeight(nx, nz);
+      this.autonate.setPosition(nx, ny, nz);
+      moving = true;
+    }
+
+    // Always keep facing synced
+    this.autonate.setFacing(this.autonateFacing);
+
+    // Swap walk ↔ idle
+    if (moving && !this.autonateIsWalking) {
+      this.autonate.play('Walking_A', true, 0.15);
+      this.autonateIsWalking = true;
+    } else if (!moving && this.autonateIsWalking) {
+      this.autonate.play('Idle', true, 0.2);
+      this.autonateIsWalking = false;
+    }
+
+    // Chase camera — lerp position, hard look-at
+    const ap = this.autonate.root.position;
+    const targetCamX = ap.x - dx * CAM_DIST;
+    const targetCamZ = ap.z - dz * CAM_DIST;
+    const targetCamY = ap.y + CAM_HEIGHT;
+
+    this.camera.position.lerp(
+      new THREE.Vector3(targetCamX, targetCamY, targetCamZ),
+      Math.min(1, dt * 6),
+    );
+    this.camera.lookAt(ap.x, ap.y + 1.5, ap.z);
+  }
 
   // ─── AUTONATE API ─────────────────────────────────────────────────────────
 

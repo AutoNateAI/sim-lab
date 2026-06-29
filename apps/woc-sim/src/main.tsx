@@ -492,6 +492,7 @@ function App(): React.JSX.Element {
   const [followedIds, setFollowedIds] = useState<ReadonlySet<string>>(new Set());
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarMouth, setAvatarMouth] = useState(0);
+  const [viewMode, setViewModeState] = useState<'spirit' | 'human'>('spirit');
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -604,6 +605,18 @@ function App(): React.JSX.Element {
     });
   }, []);
 
+  const handleToggleView = useCallback(() => {
+    const next = viewMode === 'spirit' ? 'human' : 'spirit';
+    sceneRef.current?.setViewMode(next);
+    setViewModeState(next);
+    // Human view: pause the sim clock so time runs real-time
+    if (next === 'human') setIsPlaying(false);
+    // Spirit view: resume playing
+    if (next === 'spirit') setIsPlaying(true);
+  }, [viewMode]);
+
+  const isHuman = viewMode === 'human';
+
   return (
     <div className="woc-shell">
       <canvas ref={canvasRef} className="woc-canvas" />
@@ -613,7 +626,7 @@ function App(): React.JSX.Element {
         <div className="woc-brand">
           <span className="woc-brand-eyebrow">AutoNateAI · Sim Lab</span>
           <strong className="woc-brand-title">WoC Sim</strong>
-          <span className="woc-brand-sub">Eastbrook Vale · Workforce</span>
+          <span className="woc-brand-sub">{isHuman ? 'Human View · Eastbrook Vale' : 'Spirit View · Eastbrook Vale · Workforce'}</span>
         </div>
         <div className="woc-clock">
           <div className="clock-time">{String(displayHour).padStart(2, '0')}:{String(displayMin).padStart(2, '0')}</div>
@@ -621,35 +634,67 @@ function App(): React.JSX.Element {
         </div>
         <div className="woc-controls">
           <button
-            className={`woc-btn ${avatarOpen ? 'active' : ''}`}
-            onClick={() => setAvatarOpen((v) => !v)}
-          >Avatar</button>
-          <button
-            className={`woc-btn outcomes-btn ${outcomeOpen ? 'active' : ''}`}
-            onClick={() => setOutcomeOpen((v) => !v)}
-          >Outcomes</button>
+            className={`woc-btn view-toggle-btn ${isHuman ? 'human-active' : ''}`}
+            onClick={handleToggleView}
+            title={isHuman ? 'Return to Spirit View (omniscient)' : 'Enter Human View (control Autonate)'}
+          >{isHuman ? '👁 Spirit View' : '🧑 Human View'}</button>
+          {!isHuman && (
+            <button
+              className={`woc-btn ${avatarOpen ? 'active' : ''}`}
+              onClick={() => setAvatarOpen((v) => !v)}
+            >Avatar</button>
+          )}
+          {!isHuman && (
+            <button
+              className={`woc-btn outcomes-btn ${outcomeOpen ? 'active' : ''}`}
+              onClick={() => setOutcomeOpen((v) => !v)}
+            >Outcomes</button>
+          )}
         </div>
       </header>
 
-      {/* Follow bar (below header when agents are followed) */}
-      <FollowBar
+      {/* Human View HUD */}
+      {isHuman && (
+        <div className="human-hud">
+          <div className="human-hud-mission">
+            <div className="human-hud-label">Mission · 30 Days</div>
+            <div className="human-hud-objective">Secure 5 AI consulting contracts</div>
+            <div className="human-hud-progress">
+              <div className="human-hud-pips">
+                {[0,1,2,3,4].map((i) => (
+                  <div key={i} className="human-hud-pip" />
+                ))}
+              </div>
+              <span className="human-hud-count">0 / 5</span>
+            </div>
+          </div>
+          <div className="human-hud-controls">
+            <span className="human-hud-key">W A S D</span> Move
+            <span className="human-hud-divider">·</span>
+            <span className="human-hud-key">A / D</span> Turn
+          </div>
+        </div>
+      )}
+
+      {/* Follow bar — spirit only */}
+      {!isHuman && <FollowBar
         followedIds={followedIds}
         trajectories={trajectories}
         onRemove={handleRemoveFollow}
         onClearAll={handleClearFollows}
         onSelect={setSelectedTraj}
-      />
+      />}
 
-      {/* Outcome modal */}
-      {outcomeOpen && (
+      {/* Outcome modal — spirit only */}
+      {!isHuman && outcomeOpen && (
         <OutcomeModal
           onSelectAgent={setSelectedTraj}
           onClose={() => setOutcomeOpen(false)}
         />
       )}
 
-      {/* Agent story panel */}
-      {selectedTraj && (
+      {/* Agent story panel — spirit only */}
+      {!isHuman && selectedTraj && (
         <AgentStoryPanel
           traj={selectedTraj}
           followedIds={followedIds}
@@ -660,7 +705,7 @@ function App(): React.JSX.Element {
       )}
 
       {/* Avatar control panel */}
-      {avatarOpen && (
+      {!isHuman && avatarOpen && (
         <div className="avatar-panel">
           <div className="avatar-panel-header">
             <span className="avatar-panel-title">Autonate · Avatar</span>
@@ -698,34 +743,38 @@ function App(): React.JSX.Element {
         </div>
       )}
 
-      {/* Status legend */}
-      <StatusLegend stats={stats} />
+      {/* Status legend — spirit only */}
+      {!isHuman && <StatusLegend stats={stats} />}
 
-      {/* Zone map key */}
-      <div className="woc-map-key">
-        <div className="map-key-title">Eastbrook Vale</div>
-        {[
-          {color: '#00d4ff', label: 'Hub town'},
-          {color: '#00ff88', label: 'Points of interest'},
-          {color: '#ffb800', label: 'Camps / mines'},
-          {color: '#ff2d6b', label: 'Danger zones'},
-        ].map(({color, label}) => (
-          <div key={label} className="map-key-row">
-            <div className="map-key-dot" style={{background: color, boxShadow: `0 0 5px ${color}`}} />
-            <span>{label}</span>
-          </div>
-        ))}
-      </div>
+      {/* Zone map key — spirit only */}
+      {!isHuman && (
+        <div className="woc-map-key">
+          <div className="map-key-title">Eastbrook Vale</div>
+          {[
+            {color: '#00d4ff', label: 'Hub town'},
+            {color: '#00ff88', label: 'Points of interest'},
+            {color: '#ffb800', label: 'Camps / mines'},
+            {color: '#ff2d6b', label: 'Danger zones'},
+          ].map(({color, label}) => (
+            <div key={label} className="map-key-row">
+              <div className="map-key-dot" style={{background: color, boxShadow: `0 0 5px ${color}`}} />
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Enhanced timeline */}
-      <EnhancedTimeline
-        week={selectedWeek} day={day} hour={hour} maxWeek={maxWeek}
-        isPlaying={isPlaying}
-        onWeekChange={handleWeekChange}
-        onDayChange={handleDayChange}
-        onHourChange={handleHourChange}
-        onPlayPause={() => setIsPlaying((v) => !v)}
-      />
+      {/* Enhanced timeline — spirit only */}
+      {!isHuman && (
+        <EnhancedTimeline
+          week={selectedWeek} day={day} hour={hour} maxWeek={maxWeek}
+          isPlaying={isPlaying}
+          onWeekChange={handleWeekChange}
+          onDayChange={handleDayChange}
+          onHourChange={handleHourChange}
+          onPlayPause={() => setIsPlaying((v) => !v)}
+        />
+      )}
     </div>
   );
 }
