@@ -462,6 +462,13 @@ body { background: #040810; }
   font: 700 0.72rem/1 'DM Mono', monospace;
   color: #ff6060; letter-spacing: 0.1em;
 }
+.rec-indicator.ep-rec {
+  color: #ff9030;
+}
+.rec-indicator.ep-rec .rec-dot {
+  background: #ff7010;
+  box-shadow: 0 0 8px #ff7010;
+}
 .rec-dot {
   width: 9px; height: 9px; border-radius: 50%;
   background: #ff3030;
@@ -471,6 +478,23 @@ body { background: #040810; }
 @keyframes rec-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.25; }
+}
+
+/* Episode Record button */
+.hud-action-btn.ep-rec-btn {
+  background: rgba(255,140,40,0.12);
+  border-color: rgba(255,160,60,0.45);
+  color: #ffaa44;
+}
+.hud-action-btn.ep-rec-btn:hover {
+  background: rgba(255,140,40,0.22);
+  box-shadow: 0 0 14px rgba(255,140,40,0.35);
+}
+.hud-action-btn.ep-rec-btn.rec-active {
+  background: rgba(255,100,20,0.18);
+  border-color: rgba(255,120,40,0.6);
+  color: #ff8030;
+  box-shadow: 0 0 14px rgba(255,100,20,0.3);
 }
 
 /* Play Scene button */

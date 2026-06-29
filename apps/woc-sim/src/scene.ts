@@ -4,7 +4,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {AutonateCharacter} from './autonate';
-import {ScenePlayer, DAY_ONE_SCENE, type SceneController} from './scene_player';
+import {ScenePlayer, DAY_ONE_SCENE, type SceneController, type SceneAct} from './scene_player';
 import {RecordingSession, SessionPlayback, type RecordState} from './recorder';
 import {type EpisodeNpc, type DialogueLine, INTERACTION_RADIUS} from './npcs';
 
@@ -488,6 +488,10 @@ export class WocScene {
   private readonly recorder = new RecordingSession();
   private playback: SessionPlayback | null = null;
   private autonateCurClip = 'Idle';
+
+  // Follow-locked camera — keeps camera behind character during auto-play+record
+  private followLocked = false;
+  private onSceneDone: (() => void) | null = null;
 
   // Follow mode
   private readonly followedIds = new Set<string>();
@@ -1091,6 +1095,10 @@ export class WocScene {
         if (this.scenePlayer.done) {
           this.scenePlayer = null;
           this.onSceneSubtitle?.(null);
+          // Fire completion callback (used by playEpisodeAndRecord)
+          const cb = this.onSceneDone;
+          this.onSceneDone = null;
+          cb?.();
         }
         if (this.autonate) this.updateChaseCamera(delta, true);
       } else if (this.viewMode === 'human') {
@@ -1248,8 +1256,15 @@ export class WocScene {
     const ap = this.autonate.root.position;
 
     // Smooth terrain-Y separately — prevents camera bouncing over bumpy ground.
-    // Use a slow rate (×3) so the camera glides rather than snapping to every hill.
     this.smoothedCharY += (ap.y - this.smoothedCharY) * Math.min(1, dt * 3);
+
+    // Follow-lock: always drift camera yaw toward directly behind the character.
+    // Wraps angle correctly so camera never spins 360° the wrong way.
+    if (this.followLocked) {
+      const target = this.autonateFacing + Math.PI;
+      const diff = ((target - this.camYaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      this.camYaw += diff * Math.min(1, dt * 2.5);
+    }
 
     const hDist     = Math.cos(this.camPitch) * this.camDist;
     const targetCam = new THREE.Vector3(
@@ -1499,10 +1514,46 @@ export class WocScene {
     this.scenePlayer = null;
     this.onSceneSubtitle?.(null);
     this.onSceneSubtitle = null;
+    this.onSceneDone = null;
+    this.followLocked = false;
   }
 
   get isPlayingScene(): boolean {
     return this.scenePlayer !== null;
+  }
+
+  /**
+   * Auto-play an episode script while simultaneously recording it.
+   * Camera locks to follow behind Autonate — scene cam acts only adjust pitch/dist.
+   * Calls onComplete(durationSecs) when the scene finishes and recording is saved.
+   */
+  playEpisodeAndRecord(
+    acts: SceneAct[],
+    onSubtitle: (text: string | null) => void,
+    onComplete: (duration: number) => void,
+  ): void {
+    this.stopScene();
+    this.stopPlayback();
+    this.recorder.stop();
+
+    if (this.viewMode !== 'human') this.setViewMode('human');
+
+    // Snap camera immediately behind character, slightly elevated
+    this.camPitch = 0.38;
+    this.camDist  = 12;
+    this.snapHumanCamera();
+
+    this.followLocked   = true;
+    this.onSceneSubtitle = onSubtitle;
+    this.onSceneDone    = () => {
+      this.recorder.stop();
+      this.followLocked = false;
+      onComplete(this.recorder.duration);
+    };
+
+    this.recorder.start();
+    const ctrl = this.makeSceneController();
+    this.scenePlayer = new ScenePlayer(ctrl, acts, onSubtitle);
   }
 
   /** Build the SceneController interface backed by this scene's mutable state. */
@@ -1531,7 +1582,7 @@ export class WocScene {
       setIsWalking: (b) => {
         this.autonateIsWalking = b;
       },
-      setCamYaw:   (v) => { this.camYaw   = v; },
+      setCamYaw:   (v) => { if (!this.followLocked) this.camYaw = v; },
       setCamPitch: (v) => { this.camPitch = v; },
       setCamDist:  (v) => { this.camDist  = v; },
       getCamYaw:   ()  => this.camYaw,

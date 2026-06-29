@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {WocScene, parseAgents, type AgentState, type AgentStatus, type SceneStats} from './scene';
 import type {ScheduleActivity} from './scene';
 import type {EpisodeNpc, DialogueLine} from './npcs';
-import {EP001_NPCS, EP001_BEATS} from './episodes/ep001_the_market';
+import {EP001_NPCS, EP001_BEATS, EP001_SCENE} from './episodes/ep001_the_market';
 import agentCsv from '../../../simulations/workforce-development/eastbrook-vale-experiment/runs/eastbrook_001_seed20061/agent_states.csv?raw';
 import './styles.css';
 
@@ -502,6 +502,7 @@ function App(): React.JSX.Element {
   const [playingBack, setPlayingBack] = useState(false);
   const [recTime, setRecTime] = useState(0);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [episodeRecording, setEpisodeRecording] = useState(false);
   // NPC / portal / director state
   const [nearestNpc, setNearestNpc] = useState<EpisodeNpc | null>(null);
   const [dialogueLine, setDialogueLine] = useState<DialogueLine | null>(null);
@@ -680,6 +681,41 @@ function App(): React.JSX.Element {
     }
   }, [sceneRunning]);
 
+  const handlePlayEpisodeAndRecord = useCallback(() => {
+    if (!sceneRef.current) return;
+    if (episodeRecording) {
+      // Stop early
+      sceneRef.current.stopScene();
+      sceneRef.current.stopRecording();
+      if (recTimerRef.current) clearInterval(recTimerRef.current);
+      setEpisodeRecording(false);
+      setRecording(false);
+      setSceneRunning(false);
+      setHasRecording(sceneRef.current.hasRecording);
+      setSubtitle(null);
+      return;
+    }
+    setHasRecording(false);
+    setRecTime(0);
+    setEpisodeRecording(true);
+    setRecording(true);
+    setSceneRunning(true);
+    if (recTimerRef.current) clearInterval(recTimerRef.current);
+    recTimerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
+    sceneRef.current.playEpisodeAndRecord(
+      EP001_SCENE,
+      (text) => setSubtitle(text),
+      (_duration) => {
+        if (recTimerRef.current) clearInterval(recTimerRef.current);
+        setEpisodeRecording(false);
+        setRecording(false);
+        setSceneRunning(false);
+        setHasRecording(true);
+        setSubtitle(null);
+      },
+    );
+  }, [episodeRecording]);
+
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
     sceneRef.current?.setViewMode(next);
@@ -758,23 +794,38 @@ function App(): React.JSX.Element {
           <div className="human-hud-bottom">
             {/* Recording indicator */}
             {recording && (
-              <div className="rec-indicator">
+              <div className={`rec-indicator ${episodeRecording ? 'ep-rec' : ''}`}>
                 <span className="rec-dot" />
-                REC {String(Math.floor(recTime / 60)).padStart(2,'0')}:{String(recTime % 60).padStart(2,'0')}
+                {episodeRecording ? 'EP REC' : 'REC'}{' '}
+                {String(Math.floor(recTime / 60)).padStart(2,'0')}:{String(recTime % 60).padStart(2,'0')}
               </div>
             )}
 
             {/* Action buttons row */}
             <div className="hud-btn-row">
-              {/* Record */}
-              <button
-                className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
-                onClick={handleToggleRecord}
-                title={recording ? 'Stop recording (R)' : 'Start recording (R)'}
-                disabled={playingBack || sceneRunning}
-              >
-                {recording ? '⏹ Stop' : '⏺ Record'}
-              </button>
+              {/* Episode auto-play + record — primary action */}
+              {!playingBack && (
+                <button
+                  className={`woc-btn hud-action-btn ${episodeRecording ? 'rec-active ep-rec-btn' : 'ep-rec-btn'}`}
+                  onClick={handlePlayEpisodeAndRecord}
+                  title={episodeRecording ? 'Stop episode recording' : 'Auto-play EP001 and record it (follow cam)'}
+                  disabled={recording && !episodeRecording}
+                >
+                  {episodeRecording ? '⏹ Stop EP' : '● Record EP001'}
+                </button>
+              )}
+
+              {/* Manual record */}
+              {!episodeRecording && !playingBack && (
+                <button
+                  className={`woc-btn hud-action-btn ${recording ? 'rec-active' : ''}`}
+                  onClick={handleToggleRecord}
+                  title={recording ? 'Stop recording (R)' : 'Start recording (R)'}
+                  disabled={sceneRunning}
+                >
+                  {recording ? '⏹ Stop' : '⏺ Manual'}
+                </button>
+              )}
 
               {/* Replay / stop playback */}
               {hasRecording && !recording && (
@@ -788,14 +839,14 @@ function App(): React.JSX.Element {
                 )
               )}
 
-              {/* Scripted scene */}
-              {!recording && !hasRecording && (
+              {/* Scripted scene preview (dev tool) */}
+              {!recording && !hasRecording && !episodeRecording && (
                 <button
                   className={`woc-btn hud-action-btn ${sceneRunning ? 'scene-active' : ''}`}
                   onClick={handlePlayScene}
-                  title={sceneRunning ? 'Stop scene' : 'Play scripted Day One scene'}
+                  title={sceneRunning ? 'Stop scene' : 'Preview scripted scene (no record)'}
                 >
-                  {sceneRunning ? '⏹ Scene' : '▶ Scene'}
+                  {sceneRunning ? '⏹ Scene' : '▶ Preview'}
                 </button>
               )}
             </div>
