@@ -1007,6 +1007,9 @@ export class WocScene {
       const handle = this.spawnCharacter(agent, agent.home);
       if (handle) this.characters.set(agent.id, handle);
     }
+    // Agents load async — if studio mode was already set before models finished loading,
+    // the earlier setAgentsVisible(false) ran on an empty map. Re-hide now.
+    if (this.stageMode) this.setAgentsVisible(false);
   }
 
   // ─── PER-FRAME UPDATE ──────────────────────────────────────────────────────
@@ -1532,6 +1535,8 @@ export class WocScene {
       if (idleClip) mixer.clipAction(idleClip).play();
       this.npcHandles.set(npc.id, {group, mixer, data: npc});
     }
+    // NPCs load async — hide all if studio mode was already active.
+    if (this.stageMode) this.npcHandles.forEach(({group}) => { group.visible = false; });
   }
 
   // ─── RECORD / REPLAY API ──────────────────────────────────────────────────────
