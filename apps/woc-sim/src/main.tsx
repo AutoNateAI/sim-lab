@@ -31,6 +31,7 @@ type AgentTrajectory = {
   snapshots:WeekSnapshot[]; weeksToEmployed:number|null; finalStatus:AgentStatus;
 };
 type SceneClip = {beatId:string; label:string; take:number; json:string; duration:number};
+type SavedCut = {actIdx:number; cam:{yaw:number; pitch:number; dist:number}; note:string};
 
 // ─── CSV PARSING ─────────────────────────────────────────────────────────────
 
@@ -398,11 +399,30 @@ function LeftPanel({
   );
 }
 
+// ─── ACT LABEL HELPER ────────────────────────────────────────────────────────
+
+import type {ProductionAct} from './production_player';
+
+function actLabel(act: ProductionAct): {icon: string; text: string} {
+  switch (act.kind) {
+    case 'cam':     return {icon:'🎬', text:`Camera → ${act.mode}${act.npcId ? ` (${act.npcId})` : ''}`};
+    case 'walk_to': return {icon:'🚶', text:`Walk to (${act.x}, ${act.z})`};
+    case 'face':    return {icon:'↩', text:`Face ${Math.round(act.angle * 180 / Math.PI)}°`};
+    case 'gesture': return {icon:'🤸', text:`${act.clip} · ${act.duration}s`};
+    case 'wait':    return {icon:'⏳', text:`Wait ${act.seconds}s`};
+    case 'speech':  return {
+      icon: act.speaker === 'autonate' ? '◈' : '◉',
+      text: `${act.speakerName}: "${act.text.length > 48 ? act.text.slice(0,48)+'…' : act.text}"`,
+    };
+  }
+}
+
 // ─── STUDIO: RIGHT PANEL (INSPECTOR) ─────────────────────────────────────────
 
 function Inspector({
   selectedBeat, camState, onSetCam, onResetCam,
   lastRecordedBeatId, hasRecording, onAddToPlaylist,
+  liveActIdx, savedCuts, onSaveCut, onRestoreCut,
 }: {
   selectedBeat:ProductionBeat|null;
   camState:{yaw:number; pitch:number; dist:number};
@@ -411,6 +431,10 @@ function Inspector({
   lastRecordedBeatId:string|null;
   hasRecording:boolean;
   onAddToPlaylist:(beatId:string)=>void;
+  liveActIdx:number|null;
+  savedCuts:SavedCut[];
+  onSaveCut:(actIdx:number)=>void;
+  onRestoreCut:(cut:SavedCut)=>void;
 }): React.JSX.Element {
   return (
     <div className="right-panel">
@@ -441,7 +465,54 @@ function Inspector({
         </div>
       </div>
 
-      {/* Scene Inspector */}
+      {/* Acts Checklist */}
+      {selectedBeat && selectedBeat.acts.length > 0 && (
+        <div className="panel-section panel-section-acts">
+          <div className="panel-section-hdr">
+            <span className="panel-section-label">SCENE ACTS</span>
+            <span className="panel-section-count">
+              {liveActIdx !== null
+                ? `${Math.min(liveActIdx, selectedBeat.acts.length)}/${selectedBeat.acts.length}`
+                : `${selectedBeat.acts.length} acts`}
+            </span>
+          </div>
+          <div className="acts-list">
+            {selectedBeat.acts.map((act, i) => {
+              const {icon, text} = actLabel(act);
+              const isActive  = liveActIdx === i;
+              const isDone    = liveActIdx !== null && i < liveActIdx;
+              const cut       = savedCuts.find(c => c.actIdx === i);
+              return (
+                <div
+                  key={i}
+                  className={`act-row ${isActive?'active':''} ${isDone?'done':''} ${cut?'has-cut':''}`}
+                >
+                  <span className="act-index">{String(i+1).padStart(2,'0')}</span>
+                  <span className="act-icon">{icon}</span>
+                  <span className="act-text">{text}</span>
+                  <div className="act-actions">
+                    {cut ? (
+                      <button
+                        className="act-cut-btn saved"
+                        onClick={() => onRestoreCut(cut)}
+                        title={`Restore cam: Y${cut.cam.yaw.toFixed(2)} P${cut.cam.pitch.toFixed(2)} D${cut.cam.dist.toFixed(1)}`}
+                      >✓</button>
+                    ) : (
+                      <button
+                        className="act-cut-btn"
+                        onClick={() => onSaveCut(i)}
+                        title="Save current camera angle for this act"
+                      >📐</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Scene meta + add to playlist */}
       {selectedBeat && (
         <div className="panel-section">
           <div className="panel-section-hdr">
@@ -489,8 +560,6 @@ function Inspector({
              cmd:`claude 'extend speech acts in ${selectedBeat?.id ?? 'meet_elara'} beat'`},
             {icon:'✦', label:'New episode beat',
              cmd:`claude 'add EP001 Scene ${EP001_PRODUCTION.length+1} to ep001_the_market.ts'`},
-            {icon:'✦', label:'Stage asset ideas',
-             cmd:`claude 'suggest ClaudeCraft props for ${selectedBeat?.label ?? 'market scene'}'`},
           ].map(({icon,label,cmd}) => (
             <div key={label} className="cli-action">
               <div className="cli-action-hdr">
@@ -611,6 +680,9 @@ function App(): React.JSX.Element {
   const [playlist,           setPlaylist]           = useState<SceneClip[]>([]);
   const [takeNumbers,        setTakeNumbers]        = useState<Record<string,number>>({});
   const [camState,           setCamStateReact]      = useState({yaw:0, pitch:0.36, dist:10});
+  // Acts checklist: which act is currently executing, and saved camera angles per beat
+  const [liveActIdx,  setLiveActIdx]  = useState<number|null>(null);
+  const [savedCuts,   setSavedCuts]   = useState<Record<string, SavedCut[]>>({});
 
   const maxWeek       = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek  = clockMinute % MINUTES_PER_WEEK;
@@ -828,7 +900,7 @@ function App(): React.JSX.Element {
     }
     setHasRecording(false); setLastRecordedBeatId(null); setPlayingBack(false);
     setPreviewBeatId(null); setRecTime(0); setProductionBeatId(beat.id); setRecording(true);
-    setSelectedBeatId(beat.id);
+    setSelectedBeatId(beat.id); setLiveActIdx(0);
     if (recTimerRef.current) clearInterval(recTimerRef.current);
     recTimerRef.current = setInterval(() => setRecTime(t => t+1), 1000);
     sceneRef.current.recordProductionBeat(
@@ -838,8 +910,9 @@ function App(): React.JSX.Element {
         if (recTimerRef.current) clearInterval(recTimerRef.current);
         setProductionBeatId(null); setRecording(false);
         setLastRecordedBeatId(beat.id); setHasRecording(true);
-        setRecTime(0); setSubtitle(null);
+        setRecTime(0); setSubtitle(null); setLiveActIdx(null);
       },
+      (idx) => setLiveActIdx(idx),
     );
   }, [productionBeatId]);
 
@@ -879,6 +952,21 @@ function App(): React.JSX.Element {
     });
     a.click();
   }, [playlist]);
+
+  const handleSaveCut = useCallback((actIdx: number) => {
+    if (!selectedBeatId) return;
+    const cam = sceneRef.current?.getCamState() ?? camState;
+    const note = `Act ${actIdx + 1}`;
+    setSavedCuts(prev => {
+      const existing = (prev[selectedBeatId] ?? []).filter(c => c.actIdx !== actIdx);
+      return {...prev, [selectedBeatId]: [...existing, {actIdx, cam, note}]};
+    });
+  }, [selectedBeatId, camState]);
+
+  const handleRestoreCut = useCallback((cut: SavedCut) => {
+    sceneRef.current?.setCamState(cut.cam.yaw, cut.cam.pitch, cut.cam.dist);
+    setCamStateReact(cut.cam);
+  }, []);
 
   const handleToggleView = useCallback(() => {
     const next = viewMode === 'spirit' ? 'human' : 'spirit';
@@ -1045,6 +1133,10 @@ function App(): React.JSX.Element {
             lastRecordedBeatId={lastRecordedBeatId}
             hasRecording={hasRecording}
             onAddToPlaylist={handleAddToPlaylist}
+            liveActIdx={liveActIdx}
+            savedCuts={selectedBeatId ? (savedCuts[selectedBeatId] ?? []) : []}
+            onSaveCut={handleSaveCut}
+            onRestoreCut={handleRestoreCut}
           />
         ) : (
           <div className="right-panel">

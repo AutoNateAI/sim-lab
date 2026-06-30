@@ -1651,9 +1651,10 @@ export class WocScene {
     this.onSceneSubtitle = null;
     this.onSceneDone = null;
     this.followLocked = false;
-    this.exitStageMode();
-    this.setAgentsVisible(true);
-    this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
+    // World/agent restore is handled by setViewMode('spirit'). Do NOT call exitStageMode
+    // or setAgentsVisible here — previewProductionBeat and recordProductionBeat call
+    // stopScene to clear a previous player, but they are still in studio mode and need
+    // the clean board intact for loadProductionBeat to run immediately after.
   }
 
   get isPlayingScene(): boolean {
@@ -1966,6 +1967,7 @@ export class WocScene {
     beat: ProductionBeat,
     onSubtitle: (text: string | null) => void,
     onComplete: (duration: number) => void,
+    onActChange?: (idx: number, total: number) => void,
   ): void {
     this.stopScene();
     this.stopPlayback();
@@ -1973,20 +1975,17 @@ export class WocScene {
     if (this.viewMode !== 'human') this.setViewMode('human');
 
     this.loadProductionBeat(beat);
-    // Camera preserved from preview — don't reset camPitch/camDist/camYaw here.
 
     this.onSceneSubtitle = onSubtitle;
     this.onSceneDone = () => {
       this.recorder.stop();
       this.followLocked = false;
-      // Keep stage visible after recording so user can review the composition.
-      // Agents stay hidden; world stays hidden. Spirit view button restores everything.
       onComplete(this.recorder.duration);
     };
 
     this.recorder.start();
     const ctrl = this.makeProductionController();
-    this.productionPlayer = new ProductionPlayer(ctrl, beat, onSubtitle);
+    this.productionPlayer = new ProductionPlayer(ctrl, beat, onSubtitle, onActChange);
   }
 
   get isProductionRecording(): boolean {

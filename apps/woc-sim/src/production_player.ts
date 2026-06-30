@@ -81,15 +81,18 @@ export class ProductionPlayer {
   private prevClip      = 'Idle';
   private activeNpcId: string | null;
 
+  get currentActIdx(): number { return this.actIdx; }
+  get totalActs(): number { return this.beat.acts.length; }
+
   constructor(
     private readonly ctrl: ProductionController,
     private readonly beat: ProductionBeat,
     private readonly onSubtitle: (text: string | null) => void,
+    private readonly onActChange?: (idx: number, total: number) => void,
   ) {
-    // Primary NPC partner = first non-autonate cast member
     this.activeNpcId = beat.cast.find(m => m.id !== 'autonate')?.id ?? null;
-    // Start with follow cam
     this.ctrl.setCamFollowLocked(true);
+    this.onActChange?.(0, this.beat.acts.length);
   }
 
   update(dt: number): void {
@@ -101,9 +104,9 @@ export class ProductionPlayer {
     if (complete) {
       this.actTimer    = 0;
       this.speakStarted = false;
+      const prev = this.actIdx;
       this.actIdx++;
 
-      // Clean up after speech
       if (act.kind === 'speech') {
         if (act.speaker === 'autonate') {
           this.ctrl.setMouthOpen(0);
@@ -113,6 +116,10 @@ export class ProductionPlayer {
           this.ctrl.playNpcClip(act.speaker, 'Idle', true);
         }
         this.ctrl.emitSubtitle(null);
+      }
+
+      if (this.actIdx !== prev) {
+        this.onActChange?.(this.actIdx, this.beat.acts.length);
       }
     }
   }

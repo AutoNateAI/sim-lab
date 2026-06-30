@@ -282,6 +282,66 @@ body { background: #0a0c10; }
   50%     { box-shadow: 0 0 0 4px rgba(0,220,136,0.15); }
 }
 
+/* ─── ACTS CHECKLIST ─────────────────────────────────────────────────────────── */
+.panel-section-acts { max-height: 340px; overflow-y: auto; }
+
+.acts-list { display: flex; flex-direction: column; gap: 1px; }
+
+.act-row {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 6px 6px 6px 4px; border-radius: 5px;
+  border: 1px solid transparent;
+  transition: background 100ms ease, border-color 100ms ease;
+}
+.act-row:hover { background: rgba(255,255,255,0.03); }
+.act-row.active {
+  background: rgba(0,212,255,0.07);
+  border-color: rgba(0,212,255,0.3);
+  animation: act-pulse 1s ease infinite;
+}
+.act-row.done { opacity: 0.45; }
+.act-row.has-cut { border-color: rgba(0,220,136,0.3); background: rgba(0,220,136,0.04); }
+
+@keyframes act-pulse {
+  0%,100% { border-color: rgba(0,212,255,0.3); }
+  50%     { border-color: rgba(0,212,255,0.65); }
+}
+
+.act-index {
+  font: 500 0.55rem/1 'DM Mono', monospace;
+  color: rgba(255,255,255,0.2); flex-shrink: 0; padding-top: 1px;
+}
+.act-icon {
+  font-size: 0.7rem; flex-shrink: 0; padding-top: 0px;
+  color: rgba(255,255,255,0.5);
+}
+.act-row.active .act-icon { color: #00d4ff; }
+.act-row.has-cut .act-icon { color: #00dc88; }
+
+.act-text {
+  flex: 1; min-width: 0;
+  font: 400 0.62rem/1.4 'Space Grotesk', sans-serif;
+  color: rgba(255,255,255,0.55);
+  word-break: break-word;
+}
+.act-row.active .act-text  { color: #e8f4ff; }
+.act-row.has-cut .act-text { color: rgba(0,220,136,0.9); }
+.act-row.done .act-text    { color: rgba(255,255,255,0.3); }
+
+.act-actions { flex-shrink: 0; }
+.act-cut-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; color: rgba(255,255,255,0.3);
+  font-size: 0.65rem; padding: 2px 6px; cursor: pointer; line-height: 1.4;
+  transition: all 100ms ease;
+}
+.act-cut-btn:hover { background: rgba(255,184,0,0.1); border-color: rgba(255,184,0,0.4); color: #ffb800; }
+.act-cut-btn.saved {
+  background: rgba(0,220,136,0.12); border-color: rgba(0,220,136,0.5);
+  color: #00dc88;
+}
+.act-cut-btn.saved:hover { background: rgba(0,220,136,0.2); border-color: #00dc88; }
+
 /* ─── CLI ACTIONS ────────────────────────────────────────────────────────────── */
 .cli-intro {
   font: 400 0.62rem/1.5 'DM Mono', monospace;
