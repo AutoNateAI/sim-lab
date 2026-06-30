@@ -423,6 +423,7 @@ function Inspector({
   selectedBeat, camState, onSetCam, onResetCam,
   lastRecordedBeatId, hasRecording, onAddToPlaylist,
   liveActIdx, savedCuts, onSaveCut, onRestoreCut,
+  onPreviewAct, anyPreview,
 }: {
   selectedBeat:ProductionBeat|null;
   camState:{yaw:number; pitch:number; dist:number};
@@ -435,6 +436,8 @@ function Inspector({
   savedCuts:SavedCut[];
   onSaveCut:(actIdx:number)=>void;
   onRestoreCut:(cut:SavedCut)=>void;
+  onPreviewAct:(actIdx:number)=>void;
+  anyPreview:boolean;
 }): React.JSX.Element {
   return (
     <div className="right-panel">
@@ -491,6 +494,12 @@ function Inspector({
                   <span className="act-icon">{icon}</span>
                   <span className="act-text">{text}</span>
                   <div className="act-actions">
+                    <button
+                      className={`act-preview-btn ${liveActIdx === i ? 'active' : ''}`}
+                      onClick={() => onPreviewAct(i)}
+                      disabled={anyPreview}
+                      title="Preview this act"
+                    >▶</button>
                     {cut ? (
                       <button
                         className="act-cut-btn saved"
@@ -879,12 +888,39 @@ function App(): React.JSX.Element {
 
   const handleResetCam = useCallback(() => { sceneRef.current?.snapHumanCameraPublic(); }, []);
 
+  const handleStopPreview = useCallback(() => {
+    sceneRef.current?.stopScene();
+    setPreviewBeatId(null);
+    setLiveActIdx(null);
+  }, []);
+
   const handlePreviewScene = useCallback((beat:ProductionBeat) => {
     if (!sceneRef.current || productionBeatId) return;
-    sceneRef.current.previewProductionBeat(beat);
     setPreviewBeatId(beat.id);
     setLastRecordedBeatId(null);
     setSelectedBeatId(beat.id);
+    setLiveActIdx(0);
+    sceneRef.current.previewProductionBeat(
+      beat,
+      text => setSubtitle(text),
+      () => { setPreviewBeatId(null); setLiveActIdx(null); },
+      idx  => setLiveActIdx(idx),
+    );
+  }, [productionBeatId]);
+
+  const handlePreviewAct = useCallback((beat:ProductionBeat, actIdx:number) => {
+    if (!sceneRef.current || productionBeatId) return;
+    setPreviewBeatId(beat.id);
+    setLastRecordedBeatId(null);
+    setSelectedBeatId(beat.id);
+    setLiveActIdx(actIdx);
+    sceneRef.current.previewProductionAct(
+      beat,
+      actIdx,
+      text => setSubtitle(text),
+      () => { setPreviewBeatId(null); setLiveActIdx(null); },
+      idx  => setLiveActIdx(idx),
+    );
   }, [productionBeatId]);
 
   const handleRecordProductionBeat = useCallback((beat:ProductionBeat) => {
@@ -1137,6 +1173,8 @@ function App(): React.JSX.Element {
             savedCuts={selectedBeatId ? (savedCuts[selectedBeatId] ?? []) : []}
             onSaveCut={handleSaveCut}
             onRestoreCut={handleRestoreCut}
+            onPreviewAct={(actIdx) => { if (selectedBeat) handlePreviewAct(selectedBeat, actIdx); }}
+            anyPreview={!!previewBeatId}
           />
         ) : (
           <div className="right-panel">
@@ -1184,10 +1222,14 @@ function App(): React.JSX.Element {
             <div className="footer-left">
               {/* Scene controls */}
               {!episodeRecording && !playingBack && !recording && (
-                <button className={`footer-btn preview-btn ${previewBeatId?'active':''}`}
-                  onClick={() => { if (selectedBeat) handlePreviewScene(selectedBeat); }}
-                  disabled={anyRecording || !selectedBeat}
-                >◎ Preview</button>
+                previewBeatId ? (
+                  <button className="footer-btn preview-btn active" onClick={handleStopPreview}>⏹ Stop</button>
+                ) : (
+                  <button className="footer-btn preview-btn"
+                    onClick={() => { if (selectedBeat) handlePreviewScene(selectedBeat); }}
+                    disabled={anyRecording || !selectedBeat}
+                  >◎ Preview</button>
+                )
               )}
               {!episodeRecording && !playingBack && (
                 <button

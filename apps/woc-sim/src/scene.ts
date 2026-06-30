@@ -1948,18 +1948,56 @@ export class WocScene {
     };
   }
 
-  /** Preview a production beat: loads stage + positions characters, no recording. */
-  previewProductionBeat(beat: ProductionBeat): void {
+  /**
+   * Preview a production beat: loads stage, positions characters, then runs the
+   * full script automatically (without recording). `onComplete` fires when all
+   * acts finish — caller should clear UI preview state then.
+   */
+  previewProductionBeat(
+    beat: ProductionBeat,
+    onSubtitle: (text: string | null) => void,
+    onComplete: () => void,
+    onActChange?: (idx: number, total: number) => void,
+  ): void {
     this.stopScene();
     this.stopPlayback();
     if (this.viewMode !== 'human') this.setViewMode('human');
     this.loadProductionBeat(beat);
-    // Reset to a clean default angle so user has a known starting point.
     this.camPitch = 0.36;
     this.camDist  = 10;
     this.followLocked = false;
-    this.followLockReleaseUntil = Date.now() + 120_000; // trackpad free for 2 min
+    this.followLockReleaseUntil = Date.now() + 120_000;
     this.snapHumanCamera();
+    this.onSceneSubtitle = onSubtitle;
+    this.onSceneDone = onComplete;
+    const ctrl = this.makeProductionController();
+    this.productionPlayer = new ProductionPlayer(ctrl, beat, onSubtitle, onActChange);
+  }
+
+  /**
+   * Preview a single act from a beat. Stage loads, characters reset to their
+   * beat start positions, then only the specified act executes and stops.
+   */
+  previewProductionAct(
+    beat: ProductionBeat,
+    actIdx: number,
+    onSubtitle: (text: string | null) => void,
+    onComplete: () => void,
+    onActChange?: (idx: number, total: number) => void,
+  ): void {
+    this.stopScene();
+    this.stopPlayback();
+    if (this.viewMode !== 'human') this.setViewMode('human');
+    this.loadProductionBeat(beat);
+    this.camPitch = 0.36;
+    this.camDist  = 10;
+    this.followLocked = false;
+    this.followLockReleaseUntil = Date.now() + 120_000;
+    this.snapHumanCamera();
+    this.onSceneSubtitle = onSubtitle;
+    this.onSceneDone = onComplete;
+    const ctrl = this.makeProductionController();
+    this.productionPlayer = new ProductionPlayer(ctrl, beat, onSubtitle, onActChange, actIdx, actIdx);
   }
 
   /** Load the beat stage and begin recording. Press stop to end. */

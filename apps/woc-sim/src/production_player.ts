@@ -89,10 +89,15 @@ export class ProductionPlayer {
     private readonly beat: ProductionBeat,
     private readonly onSubtitle: (text: string | null) => void,
     private readonly onActChange?: (idx: number, total: number) => void,
+    /** Jump directly to this act index on start (skip earlier acts). */
+    startActIdx = 0,
+    /** Stop and finish after this act index completes. undefined = run all. */
+    private readonly stopAtActIdx?: number,
   ) {
+    this.actIdx = startActIdx;
     this.activeNpcId = beat.cast.find(m => m.id !== 'autonate')?.id ?? null;
     this.ctrl.setCamFollowLocked(true);
-    this.onActChange?.(0, this.beat.acts.length);
+    this.onActChange?.(this.actIdx, this.beat.acts.length);
   }
 
   update(dt: number): void {
@@ -120,6 +125,11 @@ export class ProductionPlayer {
 
       if (this.actIdx !== prev) {
         this.onActChange?.(this.actIdx, this.beat.acts.length);
+      }
+
+      // Per-act preview: stop after the requested act finishes.
+      if (this.stopAtActIdx !== undefined && prev >= this.stopAtActIdx) {
+        this.finish();
       }
     }
   }
