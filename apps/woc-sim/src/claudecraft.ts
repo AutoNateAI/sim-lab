@@ -65,15 +65,19 @@ function buildStall(def: StageAssetDef): BuiltAsset {
   const awningColor = def.color;
 
   // Table top
-  g.add(Object.assign(m(new THREE.BoxGeometry(5, 0.9, 2.8), WOOD), {position: new THREE.Vector3(0, 1.0, 0)}));
+  const top = m(new THREE.BoxGeometry(5, 0.9, 2.8), WOOD);
+  top.position.set(0, 1.0, 0);
+  g.add(top);
   // Leg posts
   const legGeo = new THREE.CylinderGeometry(0.15, 0.15, 3.2, 5);
   for (const [lx, lz] of [[-2.1, -1.2], [2.1, -1.2], [-2.1, 1.2], [2.1, 1.2]] as const) {
     const leg = m(legGeo, DWOOD); leg.position.set(lx, 1.6, lz); g.add(leg);
   }
   // Cross-beam at top
-  g.add(Object.assign(m(new THREE.CylinderGeometry(0.1, 0.1, 5.2, 5), DWOOD),
-    {position: new THREE.Vector3(0, 3.1, -1.2), rotation: new THREE.Euler(0, 0, Math.PI / 2)}));
+  const beam = m(new THREE.CylinderGeometry(0.1, 0.1, 5.2, 5), DWOOD);
+  beam.position.set(0, 3.1, -1.2);
+  beam.rotation.set(0, 0, Math.PI / 2);
+  g.add(beam);
   // Awning tarp
   const awning = m(new THREE.PlaneGeometry(5.6, 3.2), tarp(awningColor, 0));
   awning.rotation.set(-0.28, 0, 0);
@@ -91,7 +95,9 @@ function buildStallMin(def: StageAssetDef): BuiltAsset {
   // Smaller cart-style stall for Min (produce)
   const g = new THREE.Group();
   // Table
-  g.add(Object.assign(m(new THREE.BoxGeometry(3.5, 0.8, 2), WOOD), {position: new THREE.Vector3(0, 0.9, 0)}));
+  const table = m(new THREE.BoxGeometry(3.5, 0.8, 2), WOOD);
+  table.position.set(0, 0.9, 0);
+  g.add(table);
   const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.8, 5);
   for (const [lx, lz] of [[-1.5, -0.9], [1.5, -0.9], [-1.5, 0.9], [1.5, 0.9]] as const) {
     const leg = m(legGeo, DWOOD); leg.position.set(lx, 1.4, lz); g.add(leg);
@@ -164,14 +170,18 @@ function buildCrateStack(def: StageAssetDef): BuiltAsset {
 function buildBench(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
   // Seat
-  g.add(Object.assign(m(new THREE.BoxGeometry(3.5, 0.25, 0.9), WOOD), {position: new THREE.Vector3(0, 1.0, 0)}));
+  const seat = m(new THREE.BoxGeometry(3.5, 0.25, 0.9), WOOD);
+  seat.position.set(0, 1.0, 0);
+  g.add(seat);
   // Legs
   const legG = new THREE.BoxGeometry(0.22, 1.0, 0.8);
   for (const lx of [-1.35, 1.35] as const) {
     const leg = m(legG, DWOOD); leg.position.set(lx, 0.5, 0); g.add(leg);
   }
   // Back rest
-  g.add(Object.assign(m(new THREE.BoxGeometry(3.5, 0.8, 0.2), WOOD), {position: new THREE.Vector3(0, 1.5, -0.35)}));
+  const back = m(new THREE.BoxGeometry(3.5, 0.8, 0.2), WOOD);
+  back.position.set(0, 1.5, -0.35);
+  g.add(back);
   return {group: g};
 }
 
@@ -179,7 +189,9 @@ function buildCampfire(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
   // Stone ring
   const stoneGeo = new THREE.CylinderGeometry(1.0, 1.1, 0.35, 10);
-  g.add(Object.assign(m(stoneGeo, STONE), {position: new THREE.Vector3(0, 0.18, 0)}));
+  const ring = m(stoneGeo, STONE);
+  ring.position.set(0, 0.18, 0);
+  g.add(ring);
   // Logs
   const logGeo = new THREE.CylinderGeometry(0.18, 0.22, 1.8, 6);
   const logMat = new THREE.MeshStandardMaterial({color: 0x3a1e0a, roughness: 1.0});
@@ -195,7 +207,9 @@ function buildCampfire(_def: StageAssetDef): BuiltAsset {
     color: 0xff6630, emissive: 0xff4400, emissiveIntensity: 2.0,
     roughness: 0, transparent: true, opacity: 0.85,
   });
-  g.add(Object.assign(m(new THREE.ConeGeometry(0.55, 1.6, 6), fireMat), {position: new THREE.Vector3(0, 1.0, 0)}));
+  const fire = m(new THREE.ConeGeometry(0.55, 1.6, 6), fireMat);
+  fire.position.set(0, 1.0, 0);
+  g.add(fire);
   // Inner flame (brighter, smaller)
   const innerFlame = m(new THREE.ConeGeometry(0.28, 1.1, 5),
     new THREE.MeshStandardMaterial({color: 0xffdd00, emissive: 0xffaa00, emissiveIntensity: 3.0, roughness: 0, transparent: true, opacity: 0.7}));
@@ -211,11 +225,17 @@ function buildCampfire(_def: StageAssetDef): BuiltAsset {
 function buildColumn(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
   // Base
-  g.add(Object.assign(m(new THREE.BoxGeometry(1.4, 0.5, 1.4), STONE), {position: new THREE.Vector3(0, 0.25, 0)}));
+  const base = m(new THREE.BoxGeometry(1.4, 0.5, 1.4), STONE);
+  base.position.set(0, 0.25, 0);
+  g.add(base);
   // Shaft
-  g.add(Object.assign(m(new THREE.CylinderGeometry(0.55, 0.6, 5.5, 8), STONE), {position: new THREE.Vector3(0, 3.25, 0)}));
+  const shaft = m(new THREE.CylinderGeometry(0.55, 0.6, 5.5, 8), STONE);
+  shaft.position.set(0, 3.25, 0);
+  g.add(shaft);
   // Capital (top)
-  g.add(Object.assign(m(new THREE.BoxGeometry(1.5, 0.55, 1.5), STONE), {position: new THREE.Vector3(0, 6.28, 0)}));
+  const capital = m(new THREE.BoxGeometry(1.5, 0.55, 1.5), STONE);
+  capital.position.set(0, 6.28, 0);
+  g.add(capital);
   return {group: g};
 }
 
@@ -226,13 +246,17 @@ function buildArchway(_def: StageAssetDef): BuiltAsset {
   // Right column
   const {group: rc} = buildColumn(_def); rc.position.set(2.5, 0, 0); g.add(rc);
   // Horizontal beam
-  g.add(Object.assign(m(new THREE.BoxGeometry(5.0, 0.8, 1.0), STONE), {position: new THREE.Vector3(0, 6.6, 0)}));
+  const beam = m(new THREE.BoxGeometry(5.0, 0.8, 1.0), STONE);
+  beam.position.set(0, 6.6, 0);
+  g.add(beam);
   return {group: g};
 }
 
 function buildTable(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
-  g.add(Object.assign(m(new THREE.BoxGeometry(3.0, 0.22, 1.8), WOOD), {position: new THREE.Vector3(0, 1.0, 0)}));
+  const top = m(new THREE.BoxGeometry(3.0, 0.22, 1.8), WOOD);
+  top.position.set(0, 1.0, 0);
+  g.add(top);
   const lGeo = new THREE.CylinderGeometry(0.12, 0.14, 1.0, 5);
   for (const [lx, lz] of [[-1.3, -0.7], [1.3, -0.7], [-1.3, 0.7], [1.3, 0.7]] as const) {
     const leg = m(lGeo, DWOOD); leg.position.set(lx, 0.5, lz); g.add(leg);
@@ -243,7 +267,9 @@ function buildTable(_def: StageAssetDef): BuiltAsset {
 function buildCart(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
   // Body
-  g.add(Object.assign(m(new THREE.BoxGeometry(2.8, 1.0, 1.8), WOOD), {position: new THREE.Vector3(0, 1.5, 0)}));
+  const body = m(new THREE.BoxGeometry(2.8, 1.0, 1.8), WOOD);
+  body.position.set(0, 1.5, 0);
+  g.add(body);
   // Wheels
   const wheelGeo = new THREE.TorusGeometry(0.75, 0.18, 6, 14);
   const wheelMat = new THREE.MeshStandardMaterial({color: 0x3a2208, roughness: 1.0});
@@ -263,7 +289,9 @@ function buildCart(_def: StageAssetDef): BuiltAsset {
 function buildSign(_def: StageAssetDef): BuiltAsset {
   const g = new THREE.Group();
   // Post
-  g.add(Object.assign(m(new THREE.CylinderGeometry(0.15, 0.18, 3.5, 6), DWOOD), {position: new THREE.Vector3(0, 1.75, 0)}));
+  const post = m(new THREE.CylinderGeometry(0.15, 0.18, 3.5, 6), DWOOD);
+  post.position.set(0, 1.75, 0);
+  g.add(post);
   // Board
   const board = m(new THREE.BoxGeometry(2.0, 1.0, 0.18),
     new THREE.MeshStandardMaterial({color: 0x9a7a40, roughness: 0.8}));
