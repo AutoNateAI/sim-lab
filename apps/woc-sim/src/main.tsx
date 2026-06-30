@@ -547,6 +547,58 @@ function SceneCard({
   );
 }
 
+// ─── CAMERA CONTROLS (drawer section) ────────────────────────────────────────
+
+function CameraControls({
+  camState,
+  onSetCam,
+  onResetCam,
+}: {
+  camState: {yaw: number; pitch: number; dist: number};
+  onSetCam: (yaw: number, pitch: number, dist: number) => void;
+  onResetCam: () => void;
+}): React.JSX.Element {
+  return (
+    <div className="cam-controls">
+      <div className="cam-controls-header">
+        <span className="cam-controls-label">CAMERA</span>
+        <button className="cam-reset-btn" onClick={onResetCam} title="Snap camera behind Autonate">Reset</button>
+      </div>
+      <div className="cam-row">
+        <span className="cam-param">Yaw</span>
+        <input
+          type="range" min={-Math.PI} max={Math.PI} step={0.01}
+          value={camState.yaw}
+          className="cam-slider"
+          onChange={e => onSetCam(Number(e.target.value), camState.pitch, camState.dist)}
+        />
+        <span className="cam-val">{camState.yaw.toFixed(2)}</span>
+      </div>
+      <div className="cam-row">
+        <span className="cam-param">Pitch</span>
+        <input
+          type="range" min={0.05} max={1.25} step={0.01}
+          value={camState.pitch}
+          className="cam-slider"
+          onChange={e => onSetCam(camState.yaw, Number(e.target.value), camState.dist)}
+        />
+        <span className="cam-val">{camState.pitch.toFixed(2)}</span>
+      </div>
+      <div className="cam-row">
+        <span className="cam-param">Dist</span>
+        <input
+          type="range" min={4} max={22} step={0.1}
+          value={camState.dist}
+          className="cam-slider"
+          onChange={e => onSetCam(camState.yaw, camState.pitch, Number(e.target.value))}
+        />
+        <span className="cam-val">{camState.dist.toFixed(1)}</span>
+      </div>
+      <div className="cam-hint">drag canvas · scroll = zoom</div>
+    </div>
+  );
+}
+
 // ─── EPISODE DRAWER ───────────────────────────────────────────────────────────
 
 function EpisodeDrawer({
@@ -555,22 +607,28 @@ function EpisodeDrawer({
   previewBeatId,
   lastRecordedBeatId,
   hasRecording,
+  camState,
   onPreview,
   onRecord,
   onAddToPlaylist,
   onRemoveClip,
   onStitch,
+  onSetCam,
+  onResetCam,
 }: {
   playlist: SceneClip[];
   productionBeatId: string | null;
   previewBeatId: string | null;
   lastRecordedBeatId: string | null;
   hasRecording: boolean;
+  camState: {yaw: number; pitch: number; dist: number};
   onPreview: (beat: ProductionBeat) => void;
   onRecord: (beat: ProductionBeat) => void;
   onAddToPlaylist: (beatId: string) => void;
   onRemoveClip: (beatId: string) => void;
   onStitch: () => void;
+  onSetCam: (yaw: number, pitch: number, dist: number) => void;
+  onResetCam: () => void;
 }): React.JSX.Element {
   const anyRecording = productionBeatId !== null;
 
@@ -580,6 +638,9 @@ function EpisodeDrawer({
         <div className="drawer-title">EP001</div>
         <div className="drawer-subtitle">The Invisible Architecture</div>
       </div>
+
+      {/* Camera controls — always visible, direct manipulation */}
+      <CameraControls camState={camState} onSetCam={onSetCam} onResetCam={onResetCam} />
 
       <div className="drawer-scenes">
         {EP001_PRODUCTION.map((beat) => {
@@ -648,7 +709,7 @@ function App(): React.JSX.Element {
   const [followedIds, setFollowedIds] = useState<ReadonlySet<string>>(new Set());
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarMouth, setAvatarMouth] = useState(0);
-  const [viewMode, setViewModeState] = useState<'spirit' | 'human'>('spirit');
+  const [viewMode, setViewModeState] = useState<'spirit' | 'human'>('human');
   const [subtitle, setSubtitle] = useState<string | null>(null);
   const [sceneRunning, setSceneRunning] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -670,6 +731,7 @@ function App(): React.JSX.Element {
   const [lastRecordedBeatId, setLastRecordedBeatId] = useState<string | null>(null);
   const [playlist, setPlaylist] = useState<SceneClip[]>([]);
   const [takeNumbers, setTakeNumbers] = useState<Record<string, number>>({});
+  const [camState, setCamStateReact] = useState({yaw: 0, pitch: 0.36, dist: 10});
 
   const maxWeek = AVAILABLE_WEEKS.at(-1) ?? 0;
   const minuteInWeek = clockMinute % MINUTES_PER_WEEK;
@@ -688,10 +750,21 @@ function App(): React.JSX.Element {
     const scene = new WocScene(canvas);
     sceneRef.current = scene;
     (window as unknown as Record<string, unknown>).__wocScene = scene;
+    // Start in studio mode — clean board by default
+    scene.setViewMode('human');
     void scene.setAgents(getWeekAgents(selectedWeekRef.current), setStats);
     void scene.setEpisodeNpcs(EP001_NPCS, setNearestNpc, setDialogueLine, setPortalPrompt);
     return () => { scene.dispose(); sceneRef.current = null; delete (window as unknown as Record<string, unknown>).__wocScene; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Poll camera state for the drawer controls
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!sceneRef.current) return;
+      setCamStateReact(sceneRef.current.getCamState());
+    }, 120);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!sceneRef.current) return;
@@ -917,6 +990,15 @@ function App(): React.JSX.Element {
   }, []);
 
   // ── Production studio handlers ───────────────────────────────────────────
+
+  const handleSetCamState = useCallback((yaw: number, pitch: number, dist: number) => {
+    sceneRef.current?.setCamState(yaw, pitch, dist);
+    setCamStateReact({yaw, pitch, dist});
+  }, []);
+
+  const handleResetCam = useCallback(() => {
+    sceneRef.current?.snapHumanCameraPublic();
+  }, []);
 
   const handlePreviewScene = useCallback((beat: ProductionBeat) => {
     if (!sceneRef.current || productionBeatId) return;
@@ -1329,7 +1411,7 @@ function App(): React.JSX.Element {
         )}
       </div>
 
-      {/* ── Episode Drawer: scene list + playlist ── */}
+      {/* ── Episode Drawer: scene list + camera controls + playlist ── */}
       {isHuman && (
         <EpisodeDrawer
           playlist={playlist}
@@ -1337,11 +1419,14 @@ function App(): React.JSX.Element {
           previewBeatId={previewBeatId}
           lastRecordedBeatId={lastRecordedBeatId}
           hasRecording={hasRecording}
+          camState={camState}
           onPreview={handlePreviewScene}
           onRecord={handleRecordProductionBeat}
           onAddToPlaylist={handleAddToPlaylist}
           onRemoveClip={handleRemoveClip}
           onStitch={handleStitch}
+          onSetCam={handleSetCamState}
+          onResetCam={handleResetCam}
         />
       )}
 

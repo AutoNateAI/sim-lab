@@ -1207,18 +1207,27 @@ export class WocScene {
       this.spiritCamTarget.copy(this.controls.target);
       this.controls.enabled = false;
 
-      // Snap camera immediately behind Autonate if loaded
-      if (this.autonate) {
-        this.snapHumanCamera();
-      }
+      // Studio = instant clean board: hide world + all sim agents
+      this.worldGroup.visible = false;
+      this.stageMode = true;
+      this.setAgentsVisible(false);
+
+      // Snap camera behind Autonate if loaded
+      if (this.autonate) this.snapHumanCamera();
     } else {
-      // Return to spirit view
+      // Restore full world on spirit view return
+      this.stopScene();
+      this.clearStageAssets();
+      this.worldGroup.visible = true;
+      this.stageMode = false;
+      this.setAgentsVisible(true);
+      this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
+
       this.controls.enabled = true;
       this.camera.position.copy(this.spiritCamPos);
       this.controls.target.copy(this.spiritCamTarget);
       this.controls.update();
 
-      // Return Autonate to idle
       if (this.autonate) {
         this.autonate.play('Idle', true);
         this.autonateIsWalking = false;
@@ -1226,7 +1235,20 @@ export class WocScene {
     }
   }
 
+  getCamState(): {yaw: number; pitch: number; dist: number} {
+    return {yaw: this.camYaw, pitch: this.camPitch, dist: this.camDist};
+  }
+
+  setCamState(yaw: number, pitch: number, dist: number): void {
+    this.camYaw   = yaw;
+    this.camPitch = Math.max(0.05, Math.min(1.25, pitch));
+    this.camDist  = Math.max(4, Math.min(22, dist));
+    this.followLockReleaseUntil = Date.now() + 5000; // hold manual angle
+  }
+
   getViewMode(): 'spirit' | 'human' { return this.viewMode; }
+
+  snapHumanCameraPublic(): void { this.snapHumanCamera(); }
 
   private snapHumanCamera(): void {
     if (!this.autonate) return;
@@ -1926,9 +1948,12 @@ export class WocScene {
     this.stopPlayback();
     if (this.viewMode !== 'human') this.setViewMode('human');
     this.loadProductionBeat(beat);
-    this.camPitch = 0.32;
-    this.camDist  = 12;
-    this.followLocked = true;
+    // Reset to a clean default angle so user has a known starting point.
+    this.camPitch = 0.36;
+    this.camDist  = 10;
+    this.followLocked = false;
+    this.followLockReleaseUntil = Date.now() + 120_000; // trackpad free for 2 min
+    this.snapHumanCamera();
   }
 
   /** Load the beat stage and begin recording. Press stop to end. */
@@ -1943,18 +1968,14 @@ export class WocScene {
     if (this.viewMode !== 'human') this.setViewMode('human');
 
     this.loadProductionBeat(beat);
+    // Camera preserved from preview — don't reset camPitch/camDist/camYaw here.
 
-    this.camPitch = 0.32;
-    this.camDist  = 12;
-    this.followLocked = true;
     this.onSceneSubtitle = onSubtitle;
     this.onSceneDone = () => {
       this.recorder.stop();
       this.followLocked = false;
-      // Restore full world
-      this.exitStageMode();
-      this.setAgentsVisible(true);
-      this.npcHandles.forEach((_, id) => this.setNpcVisible(id, true));
+      // Keep stage visible after recording so user can review the composition.
+      // Agents stay hidden; world stays hidden. Spirit view button restores everything.
       onComplete(this.recorder.duration);
     };
 

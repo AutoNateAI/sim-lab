@@ -985,3 +985,64 @@ body { background: #040810; }
   box-shadow: 0 0 16px rgba(255,180,0,0.3);
   color: #ffd044;
 }
+
+/* ─── CAMERA CONTROLS ─── */
+.cam-controls {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  background: rgba(0, 212, 255, 0.03);
+  flex-shrink: 0;
+}
+.cam-controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cam-controls-label {
+  font: 700 0.58rem/1 'DM Mono', monospace;
+  letter-spacing: 0.12em;
+  color: rgba(0, 212, 255, 0.5);
+}
+.cam-reset-btn {
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 5px;
+  color: rgba(0, 212, 255, 0.7);
+  font: 600 0.58rem/1 'DM Mono', monospace;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.cam-reset-btn:hover { background: rgba(0, 212, 255, 0.18); border-color: #00d4ff; color: #00d4ff; }
+.cam-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.cam-param {
+  font: 500 0.58rem/1 'DM Mono', monospace;
+  color: rgba(0, 212, 255, 0.45);
+  width: 30px;
+  flex-shrink: 0;
+}
+.cam-slider {
+  flex: 1;
+  accent-color: #00d4ff;
+  cursor: pointer;
+  height: 3px;
+}
+.cam-val {
+  font: 500 0.58rem/1 'DM Mono', monospace;
+  color: rgba(0, 212, 255, 0.65);
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.cam-hint {
+  font: 400 0.55rem/1 'DM Mono', monospace;
+  color: rgba(255,255,255,0.2);
+  margin-top: 5px;
+  text-align: right;
+}
